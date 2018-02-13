@@ -118,7 +118,7 @@ class TaurusAttributeChooser(Qt.QWidget, TaurusBaseWidget):
         try:
             items = list(self.getDb().get_device_exported(device))
 
-        except Exception,e:
+        except Exception as e:
             self.warning('Unable to contact with device %s: %s'%(device,str(e)))
             items=[]
 
@@ -136,7 +136,7 @@ class TaurusAttributeChooser(Qt.QWidget, TaurusBaseWidget):
         try:
             items = list(self.getDb().get_device_exported(device))
 
-        except Exception,e:
+        except Exception as e:
             self.warning('Unable to contact with device %s: %s'%(device,str(e)))
             items=[]
 
@@ -155,7 +155,7 @@ class TaurusAttributeChooser(Qt.QWidget, TaurusBaseWidget):
         try:
             items=[str(a.name) for a in PyTango.DeviceProxy(self.dev_name).attribute_list_query()]
             
-        except Exception,e:
+        except Exception as e:
             self.warning('Unable to contact with device %s: %s'%(self.dev_name,str(e)))
             items=[]
         

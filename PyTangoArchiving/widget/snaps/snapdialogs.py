@@ -78,12 +78,12 @@ class ShowSpectrumButton(TaurusLauncherButton):
         TaurusLauncherButton.__init__(self, parent = parent, designMode = designMode, widget = TaurusValuesTable(), icon=':/designer/table.png', text = 'Show snap')
         
     def setValue(self, value, dimy=1):
-        print 'ShowSpectrumButton(%s).setValue(%s)'%(self.modelName,value)
+        print(('ShowSpectrumButton(%s).setValue(%s)'%(self.modelName,value)))
         self._value = value
         try:
             self._widget = getattr(self,'_widget',None) or self.widget()
             if hasattr(self._widget,'attachRawData'):
-                self._widget.attachRawData({"name:":"","x":range(len(value)),"y":value})
+                self._widget.attachRawData({"name:":"","x":list(range(len(value))),"y":value})
             elif isinstance(self._widget,TaurusValuesTable):
                 m = self.modelName
                 tm = self._widget.setModel(m)
@@ -107,7 +107,7 @@ class ShowSpectrumButton(TaurusLauncherButton):
                             tiod.setModelData(te,tm,ti)
                         tiod.emit(Qt.SIGNAL('commitData'),te)
         except:
-            print 'URG!: %s: TaurusLauncherButton has no _widget!?'%time.ctime()
+            print(('URG!: %s: TaurusLauncherButton has no _widget!?'%time.ctime()))
             traceback.print_exc()
          
     def getValue(self):
@@ -223,8 +223,8 @@ class LoadTaurusValue(TaurusValue):
                 self._operations = [operation]
         except:
             self._operations = []
-            print '!'*80+'\n'+'updatePendingOperations(%s)'%model
-            print traceback.format_exc()
+            print(('!'*80+'\n'+'updatePendingOperations(%s)'%model))
+            print((traceback.format_exc()))
         self.updateStyle()
 #    
 
@@ -329,7 +329,7 @@ class LoadForm(TaurusForm):
     def fillWithChildren(self):
         """Overwrites super method. For writable attributes create a special Taurus value,
         with additional check box for choosing to 'load/not load' snap value."""
-        print 'LoadForm.fillWithChildren(%s)'%str(self.getModel())[:80]
+        print(('LoadForm.fillWithChildren(%s)'%str(self.getModel())[:80]))
         frame = TaurusWidget()
         frame.setLayout(Qt.QGridLayout())
         models = self.getModel()              
@@ -358,10 +358,10 @@ class LoadForm(TaurusForm):
         """
         damagedAttr = []
         from taurus.core import AttributeNameValidator
-        print 'LoadForm.loadValues([%d])'%len(attrVal.keys())
+        print(('LoadForm.loadValues([%d])'%len(list(attrVal.keys()))))
         option,ok = Qt.QInputDialog.getItem(self,'Load Values',
           ('Choose values to load:\n(attribute,(read value,write value))\n\n'+
-          '\n'.join(map(str,attrVal.items())))[:512],
+          '\n'.join(map(str,list(attrVal.items()))))[:512],
           ['read value','write value'])
         if not ok: 
             return
@@ -374,7 +374,7 @@ class LoadForm(TaurusForm):
                 #if child.getModelObj().isReadOnly(): continue
                 if m in attrVal:
                     value = attrVal[m]
-                    print('\t%s: %s'%(m,value))
+                    print(('\t%s: %s'%(m,value)))
                     writeWidget = child.writeWidget()
                     try:
                         v0 = str(writeWidget.getValue())
@@ -388,15 +388,15 @@ class LoadForm(TaurusForm):
                         damagedAttr.append(m)
                         traceback.print_exc()
                 else:
-                    print '%s not in snapshot values'%m
-        print '%d worked, %d failed'%(len(self.scrollArea.widget().children()),len(damagedAttr))
+                    print(('%s not in snapshot values'%m))
+        print(('%d worked, %d failed'%(len(self.scrollArea.widget().children()),len(damagedAttr))))
         if len(damagedAttr) > 0:
             Qt.QMessageBox.warning(self,"Could not load all the values from snapshot",
                                     "Could not load all the values from snapshot<br>" +
                                     "Problems occured for following attributes:<br>" + 
                                     "%s<br>" % str(damagedAttr) + 
                                     "Probably these attributes are not accessible.")
-        print 'LoadForm.LoadValues(...): done'
+        print('LoadForm.LoadValues(...): done')
         return True
     
     def checkAll(self, state):
@@ -493,8 +493,8 @@ class NewContextForm(TaurusForm):
             
 class LoadValuesWidget(Qt.QWidget):
     def __init__(self, parent=None, sorter=None):
-        print '#'*80
-        print ':: LoadValuesWidget(%s,%s)'%(parent,sorter)
+        print(('#'*80))
+        print((':: LoadValuesWidget(%s,%s)'%(parent,sorter)))
         Qt.QWidget.__init__(self, parent)
         self.setLayout(Qt.QGridLayout())   
         selectAllLabel = Qt.QLabel("<b>Select attributes to be loaded:</b>")
@@ -513,8 +513,8 @@ class LoadValuesWidget(Qt.QWidget):
         self.form.setModel(model)
         
     def loadValues(self, attrVal):
-        print '#'*80
-        print 'LoadValuesWidget.loadValues([%d])'%len(attrVal)
+        print(('#'*80))
+        print(('LoadValuesWidget.loadValues([%d])'%len(attrVal)))
         ok = self.form.loadValues(attrVal)
         if not ok:
             self.hide()
@@ -531,8 +531,8 @@ class LoadValuesWidget(Qt.QWidget):
         self.form.checkAll(state)
         
     def onApply(self):
-        print '#'*80
-        print 'LoadValuesWidget.onApply()'
+        print(('#'*80))
+        print('LoadValuesWidget.onApply()')
         self.emit(Qt.SIGNAL("loaded"))
         
     def onCancel(self):
@@ -592,7 +592,7 @@ class ContextAttrChooser(AttrChooser):
             if self.isReadWriteOnly():  
                 attrList = [a for a in attrList if a.writable != PyTango.AttrWriteType.READ]
             items=[a.name for a in attrList]
-        except Exception,e:
+        except Exception as e:
             Qt.QMessageBox.warning(self,"Could not load list of attributes",
                   "Unable to contact with device %s: %s" % (self.dev_name,str(e)))
             items=[]
@@ -621,7 +621,7 @@ class SnapDialog(Qt.QDialog):
             else:
                 self.snapapi = SnapAPI('%s@%s' % (credentials[0], credentials[1]), credentials[2])
         except:
-            print traceback.format_exc()
+            print((traceback.format_exc()))
             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
                                     "Could not establish connection to SnapManager DS.<br>" + \
                                     "Please check if DS is running or if credentials are correct.")
@@ -639,11 +639,11 @@ class SnapDialog(Qt.QDialog):
             contexts = self.snapapi.get_contexts()
         except:
             err = traceback.format_exc()
-            print err
+            print(err)
             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
                                     "Could not talk with SnapManager DS.<br>" + \
                                     err)
-        for context in contexts.values():
+        for context in list(contexts.values()):
             self.contextComboBox.addItem("%s [%d]" % (context.name, context.ID), Qt.QVariant(context.ID))
         self.contextComboBox.model().sort(0, Qt.Qt.AscendingOrder)
         
@@ -739,7 +739,7 @@ class SnapLoader(SnapDialog):
         self.description.setText("<b>%s</b>" % self.context.description)
         if self.defaultContextID():
             self.defaultContextLabel.setText("<b>%s</b> [%d]" % (self.context.name, self.context.ID))
-        contextAttributes = [attr['full_name'] for attr in self.context.get_attributes().values()]
+        contextAttributes = [attr['full_name'] for attr in list(self.context.get_attributes().values())]
         self.loadAttrsWidget.setModel(contextAttributes)
         if not len(contextAttributes):
             self.loadAttrsWidget.setEnableLoad(False)
@@ -766,7 +766,7 @@ class SnapLoader(SnapDialog):
             Qt.QMessageBox.warning(self,"Empty snapshot", "You tried to load an empty snapshot.")
         
     def onApply(self):
-        print 'SnapLoader.onApply()'
+        print('SnapLoader.onApply()')
         self.loadAttrsWidget.selectAll.setChecked(False)
         if not self.isStandalone():
             self.accept()
@@ -821,7 +821,7 @@ class SnapSaver(SnapDialog):
         self.author.setText("<b>%s</b>" % self.context.author)
         self.reason.setText("<b>%s</b>" % self.context.reason)
         self.description.setText("<b>%s</b>" % self.context.description)
-        contextAttributes = [attr['full_name'] for attr in self.context.get_attributes().values()]
+        contextAttributes = [attr['full_name'] for attr in list(self.context.get_attributes().values())]
         self.form.setModel(contextAttributes)
         if len(contextAttributes):
             self.form.buttonBox.button(Qt.QDialogButtonBox.Save).setEnabled(True)

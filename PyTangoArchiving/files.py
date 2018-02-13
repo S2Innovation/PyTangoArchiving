@@ -45,7 +45,7 @@ ARCHIVING_CONFIGS =  os.environ.get('ARCHIVING_CONFIGS','/data/Archiving/Config'
 RESULT = {} # Last result of each test is stored for convenience
 
 def GetConfigFiles(folder=ARCHIVING_CONFIGS,mask='.*.csv'):
-    print 'In GetConfigFiles(%s,%s)' % (folder,mask)
+    print(('In GetConfigFiles(%s,%s)' % (folder,mask)))
     return sorted(['%s/%s'%(folder,f) for f in os.listdir(folder) if fun.matchCl(fun.toRegexp(mask),f)])
 
 def getAPI(schema,dedicated=False):
@@ -90,7 +90,7 @@ def LoadArchivingConfiguration(filename, schema,launch=False,force=False,stop=Fa
     ###########################################################################
     # Loading a list of schemas
     if fun.isRegexp(schema):
-        print '>>> %s is a regexp, Loading each matching schema separately'%schema
+        print(('>>> %s is a regexp, Loading each matching schema separately'%schema))
         for s in PyTangoArchiving.ArchivingAPI.SCHEMAS:
             if not fun.matchCl(fun.toRegexp(schema),s): continue
             else: RESULT[s]=LoadArchivingConfiguration(filename,s,launch,force,stop,dedicated,check,overwrite,centralized,failed,unavailable,hosts,api,filters,exclude)
@@ -108,8 +108,8 @@ def LoadArchivingConfiguration(filename, schema,launch=False,force=False,stop=Fa
     if 'stop' not in exclude.get('type','').lower(): 
         exclude['type'] = exclude.get('type') and '(%s|%s)'%(exclude['type'],'stop') or 'stop'
                 
-    print '>>> In LoadArchivingConfiguration(%s,%s,launch=%s,dedicated=%s,force=%s,overwrite=%s,filters=%s,exclude=%s)'\
-        %((filename,schema,launch,dedicated,force,overwrite,filters,exclude,))
+    print(('>>> In LoadArchivingConfiguration(%s,%s,launch=%s,dedicated=%s,force=%s,overwrite=%s,filters=%s,exclude=%s)'\
+        %((filename,schema,launch,dedicated,force,overwrite,filters,exclude,))))
     
     if dedicated:
         raise Exception('Launch DedicateArchiversFromConfiguration(config,schema,hosts,centralized) first!')
@@ -117,17 +117,17 @@ def LoadArchivingConfiguration(filename, schema,launch=False,force=False,stop=Fa
     
     config = ParseCSV(filename,filters=filters,exclude=exclude) # Attributes not for this schema will be pruned    
     n_all = len(config)
-    print '>>> %d attributes read from %s file'%(len(config),filename)
+    print(('>>> %d attributes read from %s file'%(len(config),filename)))
     api = api or getAPI(schema)
     
     if check:
-        print '>>> Pruning attributes not available ...'
+        print('>>> Pruning attributes not available ...')
         unavailable.extend([attr for attr in config if not utils.check_attribute(attr,readable=False)])#True)])
         if unavailable:
-            print '\n%d attributes are not available!!!\n' % len(unavailable)
+            print(('\n%d attributes are not available!!!\n' % len(unavailable)))
             if force: 
                 [config.pop(att) for att in unavailable]
-            else: raise Exception, 'Attributes not available: %s'%fun.list2str(unavailable)    
+            else: raise Exception('Attributes not available: %s'%fun.list2str(unavailable))    
     
     #Attributes classified by Mode config
     modes = defaultdict(list)    
@@ -143,7 +143,7 @@ def LoadArchivingConfiguration(filename, schema,launch=False,force=False,stop=Fa
             alist = modes[mode] #We will modify the list on the run
             done = []
             if not overwrite: 
-                print 'NOTE: Only those attributes not already archived will be modified in the database.'
+                print('NOTE: Only those attributes not already archived will be modified in the database.')
                 alist = [a for a in alist if a not in api or not api.attributes[a].archiver]
             else:
                 archs = set(api[a].archiver for a in alist if a in api and api[a].archiver)
@@ -159,38 +159,38 @@ def LoadArchivingConfiguration(filename, schema,launch=False,force=False,stop=Fa
                             done.extend(attrs)
                         else:
                             if force: failed.extend(attrs)
-                            else: raise Exception,'Archiving stop failed for: %s'%(attrs)
+                            else: raise Exception('Archiving stop failed for: %s'%(attrs))
                     if launch:
                         if api.start_archiving(attrs,utils.modes_to_dict(mode),load=False,retries=1):
                             done.extend(attrs)
                         else:
                             if force: failed.extend(attrs)
-                            else: raise Exception,'Archiving start failed for: %s'%(attrs)
+                            else: raise Exception('Archiving start failed for: %s'%(attrs))
             modes[mode] = done
         api.load_all(values=False,dedicated=dedicated)
         
     ##Final Report
     if unavailable: 
-        print 'Attributes not available: %s'%fun.list2str(unavailable)
+        print(('Attributes not available: %s'%fun.list2str(unavailable)))
     if failed: 
-        print 'Attributes unable to start/stop archiving: %s' % fun.list2str(failed)
+        print(('Attributes unable to start/stop archiving: %s' % fun.list2str(failed)))
         RESULT['FAILED'] = failed
     #failed.extend(unavailable)
     if not launch: 
-        print ('THE ARCHIVING OF THE ATTRIBUTES HAS NOT BEEN PROCESSED, EXECUTE LoadArchivingConfiguration(%s,launch=True) TO DO IT'%filename)
+        print(('THE ARCHIVING OF THE ATTRIBUTES HAS NOT BEEN PROCESSED, EXECUTE LoadArchivingConfiguration(%s,launch=True) TO DO IT'%filename))
     else: 
-        print '-'*80
-        print ('%d attributes requested, %d have been introduced into archiving, %d failed, %d unavailable' %(n_all,n_all-len(unavailable)-len(failed),len(failed),len(unavailable)))
+        print(('-'*80))
+        print(('%d attributes requested, %d have been introduced into archiving, %d failed, %d unavailable' %(n_all,n_all-len(unavailable)-len(failed),len(failed),len(unavailable))))
         if archivers_to_restart:
-            print '-'*80
-            print 'Restarting %d archivers that have been modified ...'%len(archivers_to_restart)
+            print(('-'*80))
+            print(('Restarting %d archivers that have been modified ...'%len(archivers_to_restart)))
             api.servers.stop_servers(archivers_to_restart)
             time.sleep(5.)
             api.servers.start_servers(archivers_to_restart)
-            print 'DONE'
-            print '-'*80
+            print('DONE')
+            print(('-'*80))
     
-    print 'LoadArchivingConfiguration finished in %f minutes.' % ((time.time()-tstart)/60.)
+    print(('LoadArchivingConfiguration finished in %f minutes.' % ((time.time()-tstart)/60.)))
     RESULT.update(modes)
     return None if silent else RESULT
     
@@ -219,7 +219,7 @@ def DedicateArchiversFromConfiguration(filename, schema,launch=True,restart=Fals
     filters,exclude = fun.notNone(filters,{}),fun.notNone(exclude,{})
     tstart = time.time()
     
-    all_devs = map(str.lower,fandango.get_all_devices())
+    all_devs = list(map(str.lower,fandango.get_all_devices()))
     api = PyTangoArchiving.ArchivingAPI(schema,load=False) #lightweight api
     api.load_servers()
     if centralized and not fun.isString(centralized):
@@ -236,23 +236,23 @@ def DedicateArchiversFromConfiguration(filename, schema,launch=True,restart=Fals
             config = ParseCSV(filename,filters=filters,exclude=exclude) # Attributes not for this schema will be pruned        
     ###################################################################################################
         
-    print ('In DedicateArchiversFromConfiguration(%s,schema=%s,centralized=%s,filters=%s,exclude=%s)'%(filename,schema,centralized,filters,exclude))        
-    print '>>> Configuring dedicated archiving, creating new archiver servers and starting them if needed ...'
+    print(('In DedicateArchiversFromConfiguration(%s,schema=%s,centralized=%s,filters=%s,exclude=%s)'%(filename,schema,centralized,filters,exclude)))        
+    print('>>> Configuring dedicated archiving, creating new archiver servers and starting them if needed ...')
     assigned = api.load_dedicated_archivers()
     
     #Filtering already assigned or unexistent attributes
     for k,v in sorted(config.items()): 
-        if any(k.lower() in atts for dev,atts in assigned.items()): continue
+        if any(k.lower() in atts for dev,atts in list(assigned.items())): continue
         dev,attr = k.lower().rsplit('/',1)
-        if dev not in all_devs or fandango.check_device(dev) and attr not in map(str.lower,fandango.get_device(dev).get_attribute_list()):
+        if dev not in all_devs or fandango.check_device(dev) and attr not in list(map(str.lower,fandango.get_device(dev).get_attribute_list())):
             if not force:
-                print '%s attribute doesnt exist!'%k
+                print(('%s attribute doesnt exist!'%k))
                 return
         else:
             hosts[v['host'].lower().split('.')[0]].append(k.lower())
         
     if not any(hosts.values()):
-        print 'Dedicated archiving not changed ...'
+        print('Dedicated archiving not changed ...')
         if not force: return
 
     if launch:
@@ -265,46 +265,46 @@ def DedicateArchiversFromConfiguration(filename, schema,launch=True,restart=Fals
             if restart:
                 manager = api.servers.get_device_server(api.get_manager().name())
                 api.servers.stop_servers(manager)
-                print 'ArchivingManager stop, restarting archivers ...'
-                all_servers = list(set([api.servers.get_device_server(archiver) for archiver,attrs in assigned.items() if attrs]))
+                print('ArchivingManager stop, restarting archivers ...')
+                all_servers = list(set([api.servers.get_device_server(archiver) for archiver,attrs in list(assigned.items()) if attrs]))
                 
-                for host,vals in hosts.items():
+                for host,vals in list(hosts.items()):
                     servers = [s for s in all_servers if host.split('.')[0].lower() in s.lower()]
-                    print 'Restarting the Dedicated archiving servers in host %s: %s' % (host,servers)
+                    print(('Restarting the Dedicated archiving servers in host %s: %s' % (host,servers)))
                     for server in servers:
                         try:
                             if api.servers[server].ping() is not None: api.servers.stop_servers(server)
-                        except Exception,e: print 'The server may be not running: %s'%str(e)
-                        print 'waiting some seconds for stop_servers ...'
+                        except Exception as e: print(('The server may be not running: %s'%str(e)))
+                        print('waiting some seconds for stop_servers ...')
                         time.sleep(10.)
                     for server in servers:
                         try:
                             api.servers.start_servers(server,centralized or host,wait=30.)
-                            print 'waiting some seconds for start_servers ...'
+                            print('waiting some seconds for start_servers ...')
                             time.sleep(10.)
                             api.servers.set_server_level(server,centralized or host,4)
                             time.sleep(1.)
-                        except Exception,e:
+                        except Exception as e:
                             if not force:
                                 raise e
                             else:
-                                print 'UNABLE TO RESTART %s'%server
+                                print(('UNABLE TO RESTART %s'%server))
                                 [[failed.append(a) for a in assigned.get(d,[]) if a not in failed] for d in api.servers[server].get_device_list()]
                 time.sleep(10.)
                 api.servers.start_servers(manager,wait=30.)
-                print 'waiting some seconds after ArchivingManager restart ...'
+                print('waiting some seconds after ArchivingManager restart ...')
                 time.sleep(10.)
             else:
-                print '!!! %sArchiver and ArchivingManager devices must be restarted to finish the setup !!!' % schema
-        except Exception,e:
-            print traceback.format_exc()
-            print 'Dedicated Archiving failed! ... restarting the ArchivingManager'
+                print(('!!! %sArchiver and ArchivingManager devices must be restarted to finish the setup !!!' % schema))
+        except Exception as e:
+            print((traceback.format_exc()))
+            print('Dedicated Archiving failed! ... restarting the ArchivingManager')
             if launch: api.servers.start_servers(manager,wait=60.)
             raise Exception('Dedicated Archiving failed!')
         if load: api.load_all(values=False,dedicated=True)
-        print 'Dedicated archiving configuration finished ...'
+        print('Dedicated archiving configuration finished ...')
     else:
-        print 'Dedicated archiving have been verified but not executed; you must repeat command with launch=True'
+        print('Dedicated archiving have been verified but not executed; you must repeat command with launch=True')
     return hosts
     
 class ModeCheckNotImplemented(Exception): 
@@ -343,7 +343,7 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
         'triable':'missing attributes ready to be added',
         'polizon':'attributes from same devices that are being archived but not declared in this file.',
     """
-    print "In CheckArchivingConfiguration(%s,restart=%s)" % ((filename,schema,period,filters,exclude),restart)
+    print(("In CheckArchivingConfiguration(%s,restart=%s)" % ((filename,schema,period,filters,exclude),restart)))
     result,now = {},time.time()    
     tload,t0 = 0,0
     filters = fun.notNone(filters,{})
@@ -351,7 +351,7 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
     
     if schema and schema.lower() not in filters.get('type','').lower(): 
         filters['type'] = filters.get('type') and '(%s|%s)'%(filters['type'],schema) or schema
-    attributes = dict((k.lower(),v[schema.upper()]) for k,v in ParseCSV(filename,schema=schema.lower(),filters=filters,exclude=exclude).items())
+    attributes = dict((k.lower(),v[schema.upper()]) for k,v in list(ParseCSV(filename,schema=schema.lower(),filters=filters,exclude=exclude).items()))
     if not len(attributes):
         return {} #No attributes in the file match the given filter
 
@@ -359,16 +359,16 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
     api.load_attribute_modes()
     ## A dictionary gets statistics of attributes archived by each archiver. If the rate is negative the archiver will be restarted.
     archivers = dict.fromkeys(list(set(api[a].archiver for a in attributes if a in api and api[a].archiver)),0)
-    idles = [k for k,v in api.check_archivers(archivers.keys()).items() if not v] #Getting all archivers not running properly
+    idles = [k for k,v in list(api.check_archivers(list(archivers.keys())).items()) if not v] #Getting all archivers not running properly
     
     devices = [a.rsplit('/',1)[0] for a in attributes]
     STATS = defaultdict(list)
-    STATS['all'] = attributes.keys()
+    STATS['all'] = list(attributes.keys())
     #ok,unavailable,late,missing,triable,diff,retried,lost,hung,dedicated = [],[],[],[],[],[],[],[],[],[]
-    print "Checking %s attributes ..." % len(attributes)
+    print(("Checking %s attributes ..." % len(attributes)))
     retriable = defaultdict(list)
     valuable = []
-    for att,modes in attributes.items():
+    for att,modes in list(attributes.items()):
         try:
             available = utils.check_attribute(att,readable=False,timeout=2*3600)#True) #I do not want to exclude piranis!!!
             attIsNone = not available or isinstance(available,PyTango.DevFailed) or getattr(available,'value',None) is None
@@ -381,7 +381,7 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
             elif att in api: 
                 #Was archived in the past
                 STATS['lost'].append(att)
-                print '%s is LOST, no archiver assigned!'%(att)
+                print(('%s is LOST, no archiver assigned!'%(att)))
                 if restart:
                     #Dedicated configuration is not done here!! ... this is just for restarting temporarily unavailable attributes
                     retriable[utils.modes_to_string(api.check_modes(api.schema,modes))].append(att)
@@ -389,20 +389,20 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
                 #Never archived before
                 STATS['missing'].append(att)
                 if available: STATS['triable'].append(att)
-        except ModeCheckNotImplemented,e: 
+        except ModeCheckNotImplemented as e: 
                 raise e
-        except Exception,e: 
-                print 'In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)
+        except Exception as e: 
+                print(('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)))
                 STATS['missing'].append(att)
     
     t0 = time.time()
     all_values = api.load_last_values([t[0] for t in valuable],cache=period)
     tload+=time.time()-t0
-    print '\t%2.2f seconds loading values.'%tload
+    print(('\t%2.2f seconds loading values.'%tload))
     for att,modes,attIsNone in valuable:
         try:
             if api[att].dedicated: STATS['dedicated'].append(att)
-            max_period = max([2*600]+[period]+[mode[0]/1000. for mode in api[att].modes.values()]) 
+            max_period = max([2*600]+[period]+[mode[0]/1000. for mode in list(api[att].modes.values())]) 
             vals = all_values[att] #api.load_last_values(att,cache=max_period)
             date = utils.date2time(vals[0][0]) if vals else 0
             value = vals[0][1] if vals else None
@@ -423,7 +423,7 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
             if check_conf:
                 mode_to_str = lambda m: (
                     utils.modes_to_string(api.check_modes(api.schema,
-                        m if 'MODE_A' not in m and 'MODE_R' not in m else dict((k,v) for k,v in m.items() if k!='MODE_P'),
+                        m if 'MODE_A' not in m and 'MODE_R' not in m else dict((k,v) for k,v in list(m.items()) if k!='MODE_P'),
                         )))
                 m1,m2 = mode_to_str(api.check_modes(api.schema,modes)),mode_to_str(api[att].modes)
                 if m1!=m2:
@@ -431,36 +431,36 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
                     STATS['diff'].append(att)
             if check_modes:
                 raise ModeCheckNotImplemented
-        except ModeCheckNotImplemented,e: 
+        except ModeCheckNotImplemented as e: 
                 raise e
-        except Exception,e: 
-                print 'In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)
+        except Exception as e: 
+                print(('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)))
                 STATS['missing'].append(att)
                 
     STATS['polizon'] = [a for a in api.attributes if a.rsplit('/',1)[0] in devices and api[a].archiver and a not in attributes]
-    if STATS['polizon']: print '%d Attributes not in list but archived from same devices'%len(STATS['polizon'])
+    if STATS['polizon']: print(('%d Attributes not in list but archived from same devices'%len(STATS['polizon'])))
     
     summary = ', '.join(['%s:%s'%(k.upper(),len(v)) for k,v in sorted(STATS.items()) if v])
-    STATS = dict((k,sorted(l)) for k,l in STATS.items())        
+    STATS = dict((k,sorted(l)) for k,l in list(STATS.items()))        
     STATS['rate'] = (float(len(STATS['ok'])+len(STATS.get('unavailable')))/len(STATS['all'])) if (STATS.get('ok') and STATS.get('all')) else 0.
-    print ('CheckArchivingConfiguration(%s,%s): attribute check in %2.2f seconds:'%(filename,schema,time.time()-now))+'\n\t'+summary
+    print((('CheckArchivingConfiguration(%s,%s): attribute check in %2.2f seconds:'%(filename,schema,time.time()-now))+'\n\t'+summary))
     
     if restart and (idles or STATS.get('hung',[]) or retriable):
         STATS['retried'] = []
         now = time.time()
         api.load_servers()
         api.load_attribute_modes()
-        idles.extend([a for a,v in archivers.items() if v<0 and a not in idles])
+        idles.extend([a for a,v in list(archivers.items()) if v<0 and a not in idles])
         
         if idles: 
-            print '---> Restarting %d faulty archivers: %s' % (len(idles),idles)
+            print(('---> Restarting %d faulty archivers: %s' % (len(idles),idles)))
             servers = list(set(api.servers.get_device_server(d) for d in idles))
-            print '------> Restarting %d faulty servers: %s' % (len(servers),servers)
+            print(('------> Restarting %d faulty servers: %s' % (len(servers),servers)))
             api.servers.kill_servers(servers)
             time.sleep(5.)
             api.servers.start_servers(list(set(api.servers.get_device_server(d) for d in idles)))
             
-            print '%s ---> Waiting for archivers to restart ...'%time.ctime()
+            print(('%s ---> Waiting for archivers to restart ...'%time.ctime()))
             nn = time.time()
             while time.time()<(nn+150):
                 try: 
@@ -475,10 +475,10 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
             if not api[att].archiver or api[att].archiver not in idles: #Adding not-idle attributes to retriable list
                 modes = attributes[att]
                 retriable[utils.modes_to_string(api.check_modes(api.schema,modes))].append(att)
-        print '%s ---> Restarting %d archiving modes'%(time.ctime(),len(retriable))
+        print(('%s ---> Restarting %d archiving modes'%(time.ctime(),len(retriable))))
         
-        for modes,attrs in retriable.items():
-            print '%s ---> Restarting %s archiving for %d attributes' % (time.ctime(),modes,len(attrs))
+        for modes,attrs in list(retriable.items()):
+            print(('%s ---> Restarting %s archiving for %d attributes' % (time.ctime(),modes,len(attrs))))
             try: 
                 modes = utils.modes_to_dict(modes)
                 targets = [a for a in attrs if not api[a].archiver or api[a].archiver not in idles]
@@ -486,9 +486,9 @@ def CheckArchivingConfiguration(filename,schema,api=None,check_modes=False,check
                     if not api.start_archiving(targets,modes,load=False):
                         '--------> start_archiving(%s) failed with no exception'%targets
                     STATS['retried'].extend(targets)
-            except: print traceback.format_exc()
+            except: print((traceback.format_exc()))
 
-        print '%s: %s[%s] restart finished after %s seconds'%(time.ctime(),filename,len(STATS['retried']),time.time()-now)
+        print(('%s: %s[%s] restart finished after %s seconds'%(time.ctime(),filename,len(STATS['retried']),time.time()-now)))
         
     return STATS
    
@@ -506,7 +506,7 @@ def CheckConfigFilesForSchema(schema):
     csvupdated = [a for a in csvapi if a in updated]
     for k,v in sorted(vars().items()):
       if fandango.isSequence(v):
-        print('%s : %s'%(k,len(v)))
+        print(('%s : %s'%(k,len(v))))
     return
 
 def SummarizeStats(STATS):
@@ -535,12 +535,12 @@ def StopArchivingConfiguration(filename,schema,all=True,api=None):
         api.load_attribute_descriptions()
         api.load_attribute_modes()    
     config = ParseCSV(filename,schema=api.schema)
-    print 'In StopArchivingConfiguration(%s): %d attributes found' % (filename,len(config))
+    print(('In StopArchivingConfiguration(%s): %d attributes found' % (filename,len(config))))
     devices = set([c.rsplit('/',1)[0].lower() for c in config])
     for dev in devices:
         attrs = [a for a in api if a.startswith(dev) and api[a].archiver]
         if attrs: api.stop_archiving(attrs,load=False)
-        else: print 'No attributes currently archived for %s' % dev
+        else: print(('No attributes currently archived for %s' % dev))
         time.sleep(3.)
     api.load_all(values=False)
     return
@@ -551,14 +551,14 @@ def ExportToCSV(api,mask,filename):
     #mask = '.*/vc/.*/.*'
     #filename = '/homelocal/sicilia/vacuum.csv'
     
-    vcs = dict([(k,v) for k,v in api.attributes.items() if re.match(mask,k)])
+    vcs = dict([(k,v) for k,v in list(api.attributes.items()) if re.match(mask,k)])
     
     f = open(filename,'w')
     
     devices = defaultdict(dict)
-    for a,v in vcs.items():
+    for a,v in list(vcs.items()):
         try: devices[a.rsplit('/',1)[0]][a.rsplit('/',1)[-1]+';'+str(v.extractModeString(v.modes))]=v
-        except Exception,e: '%s failed: %s' % (a,str(e))
+        except Exception as e: '%s failed: %s' % (a,str(e))
     
     modes = defaultdict(dict)
     for d in devices:
@@ -568,7 +568,7 @@ def ExportToCSV(api,mask,filename):
     values.append(['#dserver host','domain/family/member','attribute','double/long/short/boolean/string/spectrum','periodic/absolute/relative'])
     for mode,devices in sorted(modes.items()):
         model = sorted(devices.keys())[0]
-        default = devices[model].values()[0].modes.get('MODE_P',[300000])[0] /1000
+        default = list(devices[model].values())[0].modes.get('MODE_P',[300000])[0] /1000
         values.append(['',model,'@DEFAULT','','periodic',default])
         for a,v in sorted(devices[model].items()):
             for m,p in sorted(v.modes.items()):
@@ -616,7 +616,7 @@ def load_data_file(var,folder=''):
                     float(l[0])
                     break
                 except: l = l[1:]
-            data.append(map(float,map(str.strip,l)))
+            data.append(list(map(float,list(map(str.strip,l)))))
     return {varname:data}
 
 def save_data_file(var,data,filename='',folder='',format='pck',**kwargs): #format in 'pck' or 'csv'
@@ -626,7 +626,7 @@ def save_data_file(var,data,filename='',folder='',format='pck',**kwargs): #forma
     """
     path = folder+'/'+(filename or get_data_filename(var,data,format))
     kwargs = kwargs or {'arrsep':' '}
-    print 'Saving %d registers to %s ...'%(len(data),path)
+    print(('Saving %d registers to %s ...'%(len(data),path)))
     if format == 'csv':
         text = PyTangoArchiving.Reader.export_to_text({var:data},**kwargs)
         open(path,'w').write(text)
@@ -663,7 +663,7 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
     if 'name' not in filters and 'attribute' in filters: filters['name'] = filters['attribute']
     
     def trace(msg):
-        if log: print msg
+        if log: print(msg)
     trace('In ParseCSV(%s,%s,%s,-%s) ...'%(filename,schema,filters,exclude))
     
     config = CSVArray()
@@ -677,7 +677,7 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
   
     def checkHeaders():
         if not all(h in ''.join(head) for h in headers):
-            print 'WRONG FILE HEADERS!'
+            print('WRONG FILE HEADERS!')
             exit()
     
     for h in head:
@@ -693,18 +693,18 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
     # it returns the list of device names and the lines that matches for each
     hosts=config.getAsTree(lastbranch='ArchivingMode')#config.get(head='Device',distinct=True)
     if not hosts: 
-        print 'NO HOSTS FOUND IN %s!!!' % filename
+        print(('NO HOSTS FOUND IN %s!!!' % filename))
         return {}
     
     ## Parsing the params to create a Context
     #-------------------------------------------------
     defaultparams = {'@LABEL':'User_Code-0X','@AUTHOR':'Who?','@DATE':'When?','@DESCRIPTION':'What?',}#'@REASON':'Why?'} ## Reason became deprecated
     transparams = {'@LABEL':'name','@AUTHOR':'author','@DATE':'time','@DESCRIPTION':'description',}#'@REASON':'reason'} ## Reason became deprecated
-    for p,v in defaultparams.items():
+    for p,v in list(defaultparams.items()):
         if not fun.inCl(p,hosts): raise Exception('PARAMS_ERROR','%s NOT FOUND'%p) 
         elif not hosts[p]:  raise Exception('PARAMS_ERROR','%s IS EMPTY'%p) 
-        elif hosts[p].keys()[0]==v: raise Exception('PARAMS_ERROR','%s NOT INITIALIZED (%s)'%(p,v)) 
-        defaultparams[p]=hosts.pop(p).keys()[0]
+        elif list(hosts[p].keys())[0]==v: raise Exception('PARAMS_ERROR','%s NOT INITIALIZED (%s)'%(p,v)) 
+        defaultparams[p]=list(hosts.pop(p).keys())[0]
         context[p]=defaultparams[p]
         if p=='@DATE':
             t,time_fmts = None,['%Y-%m-%d', '%Y-%m-%d %H:%M', '%y-%m-%d', '%y-%m-%d %H:%M', 
@@ -728,7 +728,7 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
     attrslist = {}
     archmodes={'PERIODIC':'MODE_P','ABSOLUTE':'MODE_A','RELATIVE':'MODE_R','THRESHOLD':'MODE_T','CALC':'MODE_C','EXTERNAL':'MODE_E'}
     all_devs = fandango.CaselessDict() #{}
-    [all_devs.update(devs) for devs in hosts.values()] #Used for @COPY tag
+    [all_devs.update(devs) for devs in list(hosts.values())] #Used for @COPY tag
     host = ''
     pops = []
     for khost,devs in sorted(hosts.items()):
@@ -744,8 +744,8 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
                 all_devs[dev] = all_devs[alias]
             if khost.upper() == '@HOST': 
                 try: host = utils.get_device_host(dev).split('.')[0]
-                except Exception,e: 
-                    print e
+                except Exception as e: 
+                    print(e)
                     host = ''
             elif khost!=host:
                 trace('Getting devices from host %s'%khost)
@@ -762,30 +762,30 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
                         if dev2 not in all_devs: 
                             raise Exception('AttributesNotDefinedFor:%s'%dev2)
                         #print '%s: copying attributes from %s: %s'%(dev,dev2,all_devs[dev2])
-                        [attributes.__setitem__(k,v) for k,v in all_devs[dev2].items() if k and k not in attributes]
+                        [attributes.__setitem__(k,v) for k,v in list(all_devs[dev2].items()) if k and k not in attributes]
                         attributes.pop(a)
             
             if any('@DELETE' in a or '@STOP' in a for a in attributes): #If a @DELETE or @STOP is found as single attribute all dev. attributes are stopped
                 deletelist.append(dev)
             
             DEFAULT_MODE = {'MODE_P':[300000]} ##seconds in CSV's are converted to milliseconds
-            DEFAULT_CONFIG = defaultdict(lambda:dict(DEFAULT_MODE.items()))
+            DEFAULT_CONFIG = defaultdict(lambda:dict(list(DEFAULT_MODE.items())))
             # Getting attributes with @DEFAULT clause
-            for a,tipus in attributes.items():
+            for a,tipus in list(attributes.items()):
                 #print 'a,tipus:  %s,%s'%(a,tipus)
                 if '@DEFAULT' not in a: continue
-                if not tipus or not tipus.values()[0]: 
-                    print 'Wrong format assigning defaults for %s device' % dev
+                if not tipus or not list(tipus.values())[0]: 
+                    print(('Wrong format assigning defaults for %s device' % dev))
                     continue
-                for schema,modes in tipus.items():
+                for schema,modes in list(tipus.items()):
                     trace('schema,modes: %s,%s'%(schema,modes))
-                    for mode,params in modes.items():
+                    for mode,params in list(modes.items()):
                         trace('mode,params:  %s,%s'%(mode,params))
                         mode =  archmodes.get(mode.upper(),mode)
                         DEFAULT_CONFIG[schema.upper()][mode] = [float(p) for p in params if p]
             if 'HDB' not in DEFAULT_CONFIG: DEFAULT_CONFIG['HDB'] = DEFAULT_CONFIG['']
             if 'TDB' not in DEFAULT_CONFIG: DEFAULT_CONFIG['TDB'] = DEFAULT_CONFIG['']
-            if DEFAULT_CONFIG: trace('DEFAULT_CONFIG for %s archiving is: %s' % (dev,DEFAULT_CONFIG.items()))
+            if DEFAULT_CONFIG: trace('DEFAULT_CONFIG for %s archiving is: %s' % (dev,list(DEFAULT_CONFIG.items())))
         
             for attribute,modes in sorted(attributes.items()):
                 #print 'attribute,modes:  %s,%s'%(attribute,modes)
@@ -805,7 +805,7 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
                     attrslist[dev+'/'+attribute]=dict([('host',host)]+list(DEFAULT_CONFIG.items()))
                 else:
                     attrslist[dev+'/'+attribute]={'host':host}
-                    for mode,mode_params in modes.items():
+                    for mode,mode_params in list(modes.items()):
                         #print '%s,%s'%(mode,mode_params)
                         tipus=mode.upper()
                         if not mode_params: #Schema defined but not modes
@@ -825,9 +825,9 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
                             #modes=modes.values()[0]
                             modes = mode_params #{'relative': ['15', '1', '1']}
                             try:
-                                firstmode,firstparam=modes.keys()[0],mode_params.values()[0][0]
-                            except Exception,e:
-                                print attribute,modes,mode,mode_params
+                                firstmode,firstparam=list(modes.keys())[0],list(mode_params.values())[0][0]
+                            except Exception as e:
+                                print((attribute,modes,mode,mode_params))
                                 raise e
                             if any(a.startswith('@') for a in [attribute,firstmode,tipus]):
                                     if attribute=='@DEDICATED':
@@ -837,14 +837,14 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
                             else:
                                     #Adding always a default value to the list of modes.
                                     #if 'MODE_P' not in config: config.update(DEFAULT_MODE.items())
-                                    for mode,params in mode_params.items():
+                                    for mode,params in list(mode_params.items()):
                                         if not mode: continue
                                         #print '\treading mode %s:%s'%(mode,str(params))
                                         mode=mode.upper() #MODE_P,MODE_R,MODE_A,...
                                         if mode in archmodes:
                                                 mode=archmodes[mode]
-                                        elif mode not in archmodes.values():
-                                                print 'Unknown mode!: ',mode
+                                        elif mode not in list(archmodes.values()):
+                                                print(('Unknown mode!: ',mode))
                                                 continue
                                         params = [float(p) for p in params if p]
                                         if params: params[0] = 1000.*params[0] #Converting periods from seconds to milliseconds
@@ -860,15 +860,15 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
     trace('applying filters (%s / %s) to obtained attributes'%(filters,exclude))
     if filters or exclude:
         def_keys = ('host',) #Keys unfilterable
-        keys = attrslist.keys()
+        keys = list(attrslist.keys())
         pops = []
         for attribute in keys:
             if ( ('name' in filters and not fun.matchCl(fun.toRegexp(filters['name']),attribute)) or
                  ('name' in exclude and fun.matchCl(fun.toRegexp(exclude['name']),attribute)) ):
-                print '%s filtered by %s'%(attribute,filters)
+                print(('%s filtered by %s'%(attribute,filters)))
                 pops.append(attribute)
             else:
-                modes = attrslist[attribute].keys()
+                modes = list(attrslist[attribute].keys())
                 #print 'filter check: attribute,modes: %s,%s'%(attribute,modes)
                 for mode in modes:
                     if mode in def_keys: continue
@@ -903,7 +903,7 @@ def ParseCSV(filename,schema='',filters=None,exclude=None,dedicated=None,deletel
 HDBModes={'MODE_P':4,'MODE_R':5,'MODE_A':0,'MODE_D':2,'MODE_T':6}
 
 def export2csv(attrslist,filename):
-    raise Exception,'NotImplemented'
+    raise Exception('NotImplemented')
 
 def attrs2ac(attrslist,acname):
     '''Converts and attribute list in an AC (mambo xml) file
@@ -928,7 +928,7 @@ def attrs2ac(attrslist,acname):
         modes.setAttribute('dedicatedArchiver','')
         if archtype.lower()=='tdb': modes.setAttribute('exportPeriod',"1800000")
         modes.appendChild(xmldoc.createTextNode('\n'))
-        for key,value in archmodes.items():
+        for key,value in list(archmodes.items()):
             if key not in HDBModes: continue
             mode=xmldoc.createElement('mode')
             if key in ['MODE_P','periodic']:
@@ -961,23 +961,23 @@ def attrs2ac(attrslist,acname):
         att.appendChild(xmldoc.createTextNode('\n'))
         return att
 
-    newdoc.version=u'1.0'
-    newdoc.encoding=u'ISO-8859-1'
-    args={  u'creationDate': time.strftime('%Y-%m-%d %H:%M:%S.000'),
-        u'isHistoric': u'true',
-        u'isModified': u'false',
-        u'lastUpdateDate': time.strftime('%Y-%m-%d %H:%M:%S.000'),
-        u'name': acname,
-        u'path': os.path.abspath('')+'/'+acname+'.ac'}
-    for k,v in args.items(): newdoc.firstChild.setAttribute(k,v)
+    newdoc.version='1.0'
+    newdoc.encoding='ISO-8859-1'
+    args={  'creationDate': time.strftime('%Y-%m-%d %H:%M:%S.000'),
+        'isHistoric': 'true',
+        'isModified': 'false',
+        'lastUpdateDate': time.strftime('%Y-%m-%d %H:%M:%S.000'),
+        'name': acname,
+        'path': os.path.abspath('')+'/'+acname+'.ac'}
+    for k,v in list(args.items()): newdoc.firstChild.setAttribute(k,v)
     
     fc=newdoc.firstChild
     fc.appendChild(newdoc.createTextNode('\n'))
-    for attribute,modes in attrslist.items():
+    for attribute,modes in list(attrslist.items()):
         fc.appendChild(createAttributeNode(newdoc,attribute,modes))
         fc.appendChild(newdoc.createTextNode('\n'))
         
-    print newdoc.toxml()
+    print((newdoc.toxml()))
     return newdoc
 
 def readArchivingConfigurationFromDB(htype='hdb'):
@@ -1009,10 +1009,10 @@ def parse_raw_file(filename,section='',is_key=fandango.tango.parse_tango_model):
                 values[r.replace(section,'').strip()] = parse_raw_file(rv)
     else:
         #Assuming a plain rows/columns file
-        rows = filter(bool,(r.split(comment)[0].strip() for r in rows))
+        rows = list(filter(bool,(r.split(comment)[0].strip() for r in rows)))
         sep = '\t' if all('\t' in r for r in rows) else ',' if all(',' in l for l in rows) else ' '
         header = 'column' if all('/' in r for r in rows) else 'row0'
-        split_row = lambda r: map(str.strip,r.split(sep))
+        split_row = lambda r: list(map(str.strip,r.split(sep)))
         if header == 'row0':
             values = defaultdict(list)
             row0 = rows.pop(0).split(sep)
@@ -1029,7 +1029,7 @@ def parse_raw_file(filename,section='',is_key=fandango.tango.parse_tango_model):
                     elif type(fandango.str2type(v))!=str: #A raw value
                         weights[i]+=1
                 if len(r)==2: break
-            index = [t[-1] for t in sorted((v,i) for i,v in weights.items())]
+            index = [t[-1] for t in sorted((v,i) for i,v in list(weights.items()))]
             values = dict((r[index[0]],fandango.str2type(r[index[-1]])) for r in map(split_row,rows))
     return values
         
@@ -1050,7 +1050,7 @@ def main(args):
     if len(args)>2:
         schema = filenames.pop(-1)
     else:
-        schema = raw_input('Schema?').strip() or ''
+        schema = input('Schema?').strip() or ''
     
     if all(map(os.path.isfile,filenames)):
     
@@ -1073,19 +1073,19 @@ def main(args):
             api = PyTangoArchiving.ArchivingAPI(schema)
 
             if 'start' in action.lower():
-                modes = eval(raw_input('Archiving modes?'))
+                modes = eval(input('Archiving modes?'))
                 api.start_archiving(filenames,modes)
 
             if 'stop' in action.lower():
                 api.stop_archiving(filenames)
                 
             if 'check' in action.lower():
-                print(api.load_last_values(filenames))
+                print((api.load_last_values(filenames)))
         else:
-            print('Unknown args: %s' % filenames)
+            print(('Unknown args: %s' % filenames))
             exxit()
         
 
 if __name__ == '__main__':
-    print sys.argv
+    print((sys.argv))
     main(sys.argv[1:])

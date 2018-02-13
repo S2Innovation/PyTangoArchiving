@@ -77,7 +77,7 @@ class HDBpp(ArchivingDB,SingletonMap):
             
         prop = get_device_property(manager,'LibConfiguration')
         if prop:
-            config = dict((map(str.strip,l.split('=',1)) for l in prop))
+            config = dict((list(map(str.strip,l.split('=',1))) for l in prop))
             db_name,host,user,passwd = \
                 [config.get(k) for k in 'dbname host user password'.split()]
         else:
@@ -133,7 +133,7 @@ class HDBpp(ArchivingDB,SingletonMap):
             timeout = fn.now()-timeout
             attrs = self.get_attributes(True)
             attrs = fn.filtersmart(attrs,regexp)
-            print('get_attributes_failed([%d])' % len(attrs))
+            print(('get_attributes_failed([%d])' % len(attrs)))
             print(attrs)
             vals = self.load_last_values(attrs)
             return sorted(t for t in vals if not t[1] or
@@ -166,7 +166,7 @@ class HDBpp(ArchivingDB,SingletonMap):
             self.get_archivers_attributes()
 
         m = parse_tango_model(attribute,fqdn=True)
-        for k,v in self.dedicated.items():
+        for k,v in list(self.dedicated.items()):
             for l in v:
                 if m.fullname in l.split(';'):
                     return k
@@ -247,8 +247,8 @@ class HDBpp(ArchivingDB,SingletonMap):
           time.sleep(3.)
           for a in attributes:
             self.start_archiving(a)
-        except Exception,e:
-            print('add_attribute(%s) failed!: %s'%(a,traceback.print_exc()))
+        except Exception as e:
+            print(('add_attribute(%s) failed!: %s'%(a,traceback.print_exc())))
         return
 
     def add_attribute(self,attribute,archiver,period=0,
@@ -271,7 +271,7 @@ class HDBpp(ArchivingDB,SingletonMap):
         try:
           d = self.get_manager()
           d.lock()
-          print('SetAttributeName: %s'%attribute)
+          print(('SetAttributeName: %s'%attribute))
           d.write_attribute('SetAttributeName',attribute)
           time.sleep(0.2)
           if period>0:
@@ -285,7 +285,7 @@ class HDBpp(ArchivingDB,SingletonMap):
             elif not re.search("bool|string",data_type.lower()):
               rel_event = 1e-2
           if abs_event not in (None,-1):
-            print('SetAbsoluteEvent: %s'%abs_event)
+            print(('SetAbsoluteEvent: %s'%abs_event))
             d.write_attribute('SetAbsoluteEvent',abs_event)
           if rel_event not in (None,-1):
             d.write_attribute('SetRelativeEvent',rel_event)
@@ -296,7 +296,7 @@ class HDBpp(ArchivingDB,SingletonMap):
           time.sleep(.2)
           #d.AttributeAdd()
           d.AttributeAdd()
-        except Exception,e:
+        except Exception as e:
           if 'already archived' not in str(e).lower():
             self.error('add_attribute(%s,%s,%s): %s'
                        %(attribute,archiver,period,
@@ -305,7 +305,7 @@ class HDBpp(ArchivingDB,SingletonMap):
         finally:
           #self.warning('unlocking %s ..'%self.manager)
           d.unlock()
-        print('%s added'%attribute)
+        print(('%s added'%attribute))
         
     def is_attribute_archived(self,attribute,active=None,cached=True):
         # @TODO active argument not implemented
@@ -344,7 +344,7 @@ class HDBpp(ArchivingDB,SingletonMap):
                     fullname = self.is_attribute_archived(attribute,cached=0)
                 d.AttributeStart(fullname)
                 return True
-        except Exception,e:
+        except Exception as e:
             self.error('start_archiving(%s): %s'
                         %(attribute,traceback.format_exc().replace('\n','')))
         return False        
@@ -608,7 +608,7 @@ class HDBpp(ArchivingDB,SingletonMap):
     def get_attribute_rows(self,attribute,start_date=0,stop_date=0):
         aid,tid,table = self.get_attr_id_type_table(attribute)
         if start_date and stop_date:
-            dates = map(time2str,(start_date,stop_date))
+            dates = list(map(time2str,(start_date,stop_date)))
             where = "and data_time between '%s' and '%s'" % dates
         else:
             where = ''

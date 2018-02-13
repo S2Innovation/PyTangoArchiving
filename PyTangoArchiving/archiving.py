@@ -159,14 +159,14 @@ class ArchivingAPI(CommonAPI):
     def __getitem__(self,k): return self.attributes.__getitem__(k)
     def __contains__(self,k): return self.attributes.__contains__(k)
     def get(self,k): return self.attributes.get(k)
-    def has_key(self,k): return self.attributes.has_key(k)
+    def has_key(self,k): return k in self.attributes
     #[setattr(self,method,lambda k,meth=method:getattr(self.attributes,meth)(k)) for method in ('__getitem__','__contains__','get','has_key')]
     def __iter__(self): return self.attributes.__iter__()
-    def iteritems(self): return self.attributes.iteritems()
-    def keys(self): return self.attributes.keys()
-    def values(self): return self.attributes.values()
-    def __len__(self): return len(self.attributes.keys())
-    def items(self): return self.attributes.items()
+    def iteritems(self): return iter(list(self.attributes.items()))
+    def keys(self): return list(self.attributes.keys())
+    def values(self): return list(self.attributes.values())
+    def __len__(self): return len(list(self.attributes.keys()))
+    def items(self): return list(self.attributes.items())
     #[setattr(self,method,lambda meth=method:getattr(self.attributes,meth)()) for method in ('__iter__','iteritems','items','keys','values')]
 
     
@@ -179,7 +179,7 @@ class ArchivingAPI(CommonAPI):
     def __clean_extractor(self,extractor,vattr=None):
         ''' removing dynamic attributes from extractor devices ...'''
         #self.log.debug('In PyTangoArchiving.Reader.__cleanExtractor(): removing dynamic attributes')
-        print 'In PyTangoArchiving.Reader.__cleanExtractor(): removing dynamic attributes'
+        print('In PyTangoArchiving.Reader.__cleanExtractor(): removing dynamic attributes')
         if isinstance(extractor,PyTango.DeviceProxy): 
             name,proxy=extractor.dev_name(),extractor
         else: 
@@ -188,13 +188,13 @@ class ArchivingAPI(CommonAPI):
         else: proxy.RemoveDynamicAttributes()              
         
     def __extractorCommand(self,extractor=None,command='',args=[]):
-        if not command: raise Exception,'Reader__extractorCommand:CommandArgumentRequired!'
+        if not command: raise Exception('Reader__extractorCommand:CommandArgumentRequired!')
         if not extractor: extractor = self.get_extractor()
         extractor.ping()
         try:
-            print 'in Reader.__extractorCommand: calling HdbExtractor command %s(%s)'%(command,args)            
+            print(('in Reader.__extractorCommand: calling HdbExtractor command %s(%s)'%(command,args)))            
             result = extractor.command_inout(*([command]+(args and [args] or [])))
-        except PyTango.DevFailed, e:
+        except PyTango.DevFailed as e:
             #e.args[0]['reason'],e.args[0]['desc'],e.args[0]['origin']
             reason = '__len__' in dir(e.args[0]) and e.args[0]['reason'] or e.args[0]
             if 'Broken pipe' in str(reason):
@@ -203,11 +203,11 @@ class ArchivingAPI(CommonAPI):
             elif 'MEMORY_ERROR' in str(reason):
                 self.clean_extractor()
                 extractor.init()                
-                raise Exception,'Extractor_%s'%reason
+                raise Exception('Extractor_%s'%reason)
             else:
-                print traceback.format_exc()
-                raise Exception,'Reader__extractorCommand:Failed(%s)!'% str(e)
-        print 'in Reader.__extractorCommand: command finished'
+                print((traceback.format_exc()))
+                raise Exception('Reader__extractorCommand:Failed(%s)!'% str(e))
+        print('in Reader.__extractorCommand: command finished')
         return result
                 
     #----------------------------------------------------------------------------------------------
@@ -215,7 +215,7 @@ class ArchivingAPI(CommonAPI):
     
     def get_archived_attributes(self,attrs=None):
         #return self.__extractorCommand(self.get_extractor(),'GetCurrentArchivedAtt')
-        attrs = attrs or self.keys()
+        attrs = attrs or list(self.keys())
         return [a for a in attrs if a in self and self[a].archiver]
     
     def is_attribute_archived(self,attribute):
@@ -241,7 +241,7 @@ class ArchivingAPI(CommonAPI):
         return archivers
     
     def get_attribute_by_ID(self,ID):
-        for a in self.attributes.values():
+        for a in list(self.attributes.values()):
             if a.ID==ID: return a
         return None
             
@@ -257,13 +257,13 @@ class ArchivingAPI(CommonAPI):
         '''
         dbattrs = self.attributes
         newattributes=[]
-        for a,v in attribute_list.items():
+        for a,v in list(attribute_list.items()):
             if a in dbattrs:
                 modes=v['modes']
                 dbmodes=dbattrs[a].extractModeString()
                 #print a,':',modes
                 #print '\tDB:',dbmodes
-                for k,v in modes.items():
+                for k,v in list(modes.items()):
                     if k not in dbmodes: continue
                     else:
                         if len(modes[k])!=len(dbmodes[k]) or any(modes[k][i]>dbmodes[k][i] for i in range(len(modes[k]))):
@@ -293,14 +293,14 @@ class ArchivingAPI(CommonAPI):
         If you want the full list of dedicated archivers use load_dedicated_archivers() instead.
         """
         result = dict()
-        if attr_list: attr_list = map(str.lower,attr_list)
+        if attr_list: attr_list = list(map(str.lower,attr_list))
         if load or not self.dedicated: 
             dedi = self.load_dedicated_archivers(attr_list)
         else:
             dedi = self.dedicated
         if attr_list:
-            for k,v in dedi.items():
-                v = map(str.lower,v)
+            for k,v in list(dedi.items()):
+                v = list(map(str.lower,v))
                 for a in v:
                     if a in attr_list:
                         if a not in result:
@@ -308,7 +308,7 @@ class ArchivingAPI(CommonAPI):
                         else:
                             self.log.warning('%s assigned to 2 devices!!: %s, %s'%(k,result[a]))
         else:
-            result = dict((a,d) for d,v in dedi.items() for a in v)
+            result = dict((a,d) for d,v in list(dedi.items()) for a in v)
         return result
 
     def get_archiver_status(self,archiver):
@@ -327,7 +327,7 @@ class ArchivingAPI(CommonAPI):
         max_periodic = (('MODE_R' in modes or 'MODE_A' in modes) and 43200000) or (60000 if schema.lower()=='tdb' else 3600000)
         new_modes = {}
         corrections = 0
-        for mode,old_params in modes.items():
+        for mode,old_params in list(modes.items()):
             mode = mode.upper()
             if mode not in porder:
                 continue
@@ -405,7 +405,7 @@ class ArchivingAPI(CommonAPI):
                 if ac.writable!=ad.writable:
                     self.log.warning('Attribute %s WriteType differs between Tango(%s) and ADT(%s)'% \
                         (attr,PyTango.AttrWriteType.values[ac.writable],PyTango.AttrWriteType.values[ad.writable]))
-            except Exception,e:
+            except Exception as e:
                 self.log.warning('Unable to get AttributeConfig for %s: %s'%(attr,str(e)))
         return repaired      
                   
@@ -416,7 +416,7 @@ class ArchivingAPI(CommonAPI):
                 False if not running, None if it seems unresponsive
         """
         if load: self.load_all(values=False)
-        archivers = archivers or set(a.archiver for a in self.attributes.values() if a.archiver)#hdb.get_archivers()
+        archivers = archivers or set(a.archiver for a in list(self.attributes.values()) if a.archiver)#hdb.get_archivers()
         return dict((d,utils.check_device(d,command='StateDetailed')) for d in archivers)
                 
     def check_attributes_errors(self, attributes=None, hours=12, load=False,time_tolerance=.2,value_tolerance=1.,exclude=None, lazy=False, use_watcher=False):
@@ -433,7 +433,7 @@ class ArchivingAPI(CommonAPI):
         :return: {Attribute:[errors_epoch]} # If the value returned for a key is empty it means that attribute has no errors, 
                 if an epoch=0 is returned it means that no value has been found
         """
-        if attributes is None: attributes = self.attributes.keys()
+        if attributes is None: attributes = list(self.attributes.keys())
         else: attributes = fun.toList(attributes)
         exclude,errors = fun.toList(exclude),{}
         if exclude: attributes = [a for a in attributes if not fun.anyone(re.match(e,a) for e in exclude)]
@@ -497,7 +497,7 @@ class ArchivingAPI(CommonAPI):
                             [errors[attribute][mode].append(t0) for mode in modes]
                         for value in values:
                             t1,v1 = utils.date2time(value[0]),value[1]
-                            for mode,check in utils.check_attribute_modes((t0,v0),(t1,v1),self[attribute].modes).items():
+                            for mode,check in list(utils.check_attribute_modes((t0,v0),(t1,v1),self[attribute].modes).items()):
                                 if not check:
                                     if mode not in errors[attribute]: 
                                         params = self[attribute].modes[mode]
@@ -510,7 +510,7 @@ class ArchivingAPI(CommonAPI):
                             t0,v0 = t1,v1
                         if errors[attribute]: errors[attribute]=dict(errors[attribute])
                         else: errors.pop(attribute)
-            except Exception,e:
+            except Exception as e:
                 #self.log.warning('FAILED %s(%s) ... %s'%(attribute,archiver,traceback.format_exc()))#e))
                 self.log.warning('FAILED %s(%s,%s); line %d:  %s'%(attribute,archiver,modes,sys.exc_info()[2].tb_lineno,e))
                 if 'Commands out of sync' in str(e): 
@@ -535,7 +535,7 @@ class ArchivingAPI(CommonAPI):
         The format of values returned is [(epoch,value),]
         The flag 'asHistoryBuffer' forces to return the rawHistBuffer returned by the DS.
         '''
-        raise Exception,'Deprecated_by_PyTangoArchiving.Reader.get_attribute_values'
+        raise Exception('Deprecated_by_PyTangoArchiving.Reader.get_attribute_values')
         
         if not stop_date: stop_date=time.time()
         self.log.debug( 'in getArchivedValues(%s) ...'%self.schema)
@@ -625,9 +625,9 @@ class ArchivingAPI(CommonAPI):
                 def retry_command(comm,retries=retries):
                     """ Function added to do commands with retries. """
                     e0 = None
-                    for x in reversed(range(retries)):
+                    for x in reversed(list(range(retries))):
                         try: return comm()
-                        except Exception,e: 
+                        except Exception as e: 
                             e0 = e0 or e
                             self.log.error('%s_archiving(...): %s command_inout failed, %d retries left' % (action.lower(),str(comm),x))
                             if 'IllegalStateException' in str(e): 
@@ -645,7 +645,7 @@ class ArchivingAPI(CommonAPI):
                 
                 #Checking Archivers to be running (To avoid SegFault in command_inout)
                 for a in archatts:
-                    archiver = self.attributes.has_key(a) and self.attributes[a].archiver or ''
+                    archiver = a in self.attributes and self.attributes[a].archiver or ''
                     if not archiver:
                         self.log.warning('ArchivingStop for %s, its archiver is unknown! Launch load_attribute_descriptions first.'%a)
                         stoplist.append(a)
@@ -660,13 +660,13 @@ class ArchivingAPI(CommonAPI):
                             sserver = self.get_servers().get_device_server(self.attributes[a].archiver)
                             modified_archivers.add(sserver)
                             self.log.info('Server %s added to restart list'%sserver)
-                    print(archiver,archatts,stoplist)
+                    print((archiver,archatts,stoplist))
                 #Stopping archiving
                 if stoplist:
                     self.log.info('Stopping archiving for %s attribs ...'%(len(stoplist)<100 and stoplist or str(len(stoplist))))
                     #print 'Stopping archiving for %s attribs ...'%(len(stoplist)<100 and stoplist or str(len(stoplist)))
                     try: retry_command(lambda dp=dp:dp.command_inout('ArchivingStop%s'%self.schema.upper(),stoplist))
-                    except Exception,e:
+                    except Exception as e:
                         if action=='stop': raise e
                         else: self.log.info('ArchivingStop%s failed ... '%self.schema.upper())
                 elif action=='stop': self.log.warning('No attributes were stop! (not archived or archiver not running)')
@@ -703,14 +703,14 @@ class ArchivingAPI(CommonAPI):
                     check_result(attribute_list,action)
                 self.log.debug('Out of %s_archiving(...)'%(action))
                 return True
-            except PyTango.DevFailed,e:
+            except PyTango.DevFailed as e:
                 try:
                     if any(['supported' in a.desc.lower() for a in e.args]):
                         self.log.warning()
                 except:pass
                 PyTango.Except.print_exception(e)
                 return False
-            except Exception,e:
+            except Exception as e:
                 exstring = traceback.format_exc()
                 self.log.warning('Exception occurred and catched at %s_archiving: %s'%(action,exstring))
                 self.log.warning('Last exception was: \n'+str(e)+'\n')
@@ -767,7 +767,7 @@ class ArchivingAPI(CommonAPI):
         self.load_attribute_modes(attributes)
         if dedicated: 
             try: self.dedicated = self.load_dedicated_archivers()
-            except Exception,e: self.log.warning('Unable to get dedicated archivers: %s'%traceback.format_exc())
+            except Exception as e: self.log.warning('Unable to get dedicated archivers: %s'%traceback.format_exc())
         if values: self.load_last_values(n=1)
 
     def load_attribute_descriptions(self,attributes=None):
@@ -825,7 +825,7 @@ class ArchivingAPI(CommonAPI):
         self.db.renewMySQLconnection()
         
         if attributes is None: 
-            attributes = self.attributes.keys()
+            attributes = list(self.attributes.keys())
             IDs = self.db.get_attribute_modes(asDict=True)
         else:
             if any(a.lower() not in self.attributes for a in attributes): 
@@ -895,11 +895,11 @@ class ArchivingAPI(CommonAPI):
                     if len(lines):
                         value,date=lines[0][1],time.mktime(lines[0][0].timetuple())+1e-6*lines[0][0].microsecond
                         self.attributes[attribute].setLastValue(value,date)
-                        if self.attributes[attribute].archiver and date<(now-max([3600]+[mode[0]/1000. for mode in self[attribute].modes.values()])): 
+                        if self.attributes[attribute].archiver and date<(now-max([3600]+[mode[0]/1000. for mode in list(self[attribute].modes.values())])): 
                             self.log.debug('%s (%s) has no values since %s.'%(attribute,self.attributes[attribute].archiver,time.ctime(date)))
                     elif self.attributes[attribute].archiver:
                         self.log.error('No values has been found for attribute %s!'%attribute)
-                except Exception,e:
+                except Exception as e:
                     self.log.error('Exception while acquiring data from MySQL for attribute %s:\n%s'%(attribute,traceback.format_exc()))
                     self.attributes[attribute].exception='%s:%s'%(time.ctime(),str(e))
             return lines
@@ -937,7 +937,7 @@ class ArchivingAPI(CommonAPI):
         archivers,attributes= defaultdict(list),defaultdict(list)        
         wrongs = wrongs if wrongs is not None else []
         if not attr_list: 
-            attr_list = self.attributes.keys()
+            attr_list = list(self.attributes.keys())
         else:
             if type(attr_list) is str: attr_list=[attr_list]
             attr_list = [a.lower() for a in attr_list]
@@ -947,7 +947,7 @@ class ArchivingAPI(CommonAPI):
             archivers[arch] = attrs
             [(attributes[r].append(arch)) for r in archivers[arch] if (not attr_list) or r in attr_list]
         if check: # It is crosschecked if the configuration is ok
-            for d,v in attributes.items():
+            for d,v in list(attributes.items()):
                 if d not in self.attributes: 
                     self.log.warning('Attribute "%s" is dedicated but not in Archiving Database!!! (%s)'%(d,v))
                 elif not v: 
@@ -990,7 +990,7 @@ class ArchivingAPI(CommonAPI):
             attributes= sorted([a.lower() for a in attributes])
             
             ## assigned = It gets all existing archivers for this host
-            existing = map(str.lower,filter(lambda s:bool(re.match('.*/.*/'+host+'[\-0-9]+',s)),archivers))
+            existing = list(map(str.lower,[s for s in archivers if bool(re.match('.*/.*/'+host+'[\-0-9]+',s))]))
             ## Filtering the attribute list to remove all attributes already archived in *HOST* archivers
             for archiver in existing:
                 assigned[archiver] = self.get_archiver_reserved_attributes(archiver)
@@ -1021,7 +1021,7 @@ class ArchivingAPI(CommonAPI):
             devices = defaultdict(list)
             [devices[a.rsplit('/',1)[0]].append(a) for a in attributes]           
             #use_devs controls if attributes are separated by devices
-            group_devs = devices and max(len(a) for a in devices.values())<(max_per_device/2.)           
+            group_devs = devices and max(len(a) for a in list(devices.values()))<(max_per_device/2.)           
             if group_devs:  self.log.debug('In configure_dedicated_archivers(...): grouping attributes by devices')
             
             # Adding attribute to each archiver (and creating if needed). 
@@ -1057,7 +1057,7 @@ class ArchivingAPI(CommonAPI):
                     x,iarchiver = x+len(attribs),iarchiver+1
                 iserver+=1
                 iarchiver=1
-            print ''
+            print('')
             
         [self.servers.load_by_name(k) for k in self.get_archiving_classes()]
         

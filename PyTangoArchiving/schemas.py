@@ -46,7 +46,7 @@ class Schemas(object):
     
     @classmethod
     def keys(k):
-        return k.SCHEMAS.keys()
+        return list(k.SCHEMAS.keys())
     
     @classmethod
     def load(k,tango='',prop=''):
@@ -63,7 +63,7 @@ class Schemas(object):
         
         if schema.startswith('#') and EXPERT_MODE:
             schema = schema.strip('#')
-            print('%s available only in EXPERT_MODE'%schema)
+            print(('%s available only in EXPERT_MODE'%schema))
 
         if schema in k.SCHEMAS:
           # Failed schemas should be also returned (to avoid unneeded retries)
@@ -76,7 +76,7 @@ class Schemas(object):
           tango = fandango.tango.get_database(tango)
           props = prop or tango.get_property('PyTangoArchiving',schema)[schema]
           if fandango.isSequence(props):
-            props = [map(str.strip,t.split('=',1)) for t in props]
+            props = [list(map(str.strip,t.split('=',1))) for t in props]
           dct.update(props)
           
           rd = dct.get('reader')
@@ -102,8 +102,8 @@ class Schemas(object):
 
             if not hasattr(rd,'schema'): rd.schema = dct['schema']
 
-        except Exception,e:
-            print('Reader.getSchema(%s): failed!'%schema)
+        except Exception as e:
+            print(('Reader.getSchema(%s): failed!'%schema))
             if logger: 
                 try: logger.debug(traceback.format_exc())
                 except: pass

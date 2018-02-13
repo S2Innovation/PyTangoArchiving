@@ -88,7 +88,7 @@ class ShowHistoryDialog(fandango.Object):
   @staticmethod
   def setup_table(attribute,start,stop,values):
   
-      print 'drawing table from %d values: %s ...' %( len(values),values[:2])
+      print(('drawing table from %d values: %s ...' %( len(values),values[:2])))
       twi = Qt.QWidget()
       twi.setLayout(Qt.QVBoxLayout())
       tab = Qt.QTableWidget()
@@ -123,9 +123,9 @@ class ShowHistoryDialog(fandango.Object):
           if not Qt.QApplication.instance(): Qt.QApplication([])
       except:
           pass
-      print 'in Vacca.widgets.show_history(%s)'
+      print('in Vacca.widgets.show_history(%s)')
       
-      print 'getting archiving readers ...'
+      print('getting archiving readers ...')
       from PyTangoArchiving import Reader
       rd = Reader(schema.lower())
       hdb = Reader('hdb')
@@ -135,14 +135,14 @@ class ShowHistoryDialog(fandango.Object):
       try:
         dates = dates or klass.get_default_dates()
         if not all(map(fandango.isString,dates)):
-          dates = map(epoch2str,dates)
+          dates = list(map(epoch2str,dates))
       except:
           traceback.print_exc()
           dates = epoch2str(),epoch2str()
 
       schemas = rd.is_attribute_archived(attribute,preferent=False)
       if schemas:
-          print '%s is being archived' % attribute
+          print(('%s is being archived' % attribute))
           di = Qt.QDialog(parent)
           wi = di #QtGui.QWidget(di)
           wi.setLayout(Qt.QGridLayout())
@@ -175,32 +175,32 @@ class ShowHistoryDialog(fandango.Object):
           
           def check_values():
               di.exec_()
-              print 'checking schema ...'
+              print('checking schema ...')
               schema = str(qschema.currentText()).strip()
               if schema != '*':
                     rd.set_preferred_schema(attribute,schema)              
               if di.result():
-                  print 'checking result ...'
+                  print('checking result ...')
                   try:
                       start,stop = str(begin.text()),str(end.text())
                       try: tf = int(str(tfilter.text()))
                       except: tf = 0
                       vf = vfilter.isChecked()
                       if not all(re.match('[0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+:[0-9]+',str(s).strip()) for s in (start,stop)):
-                          print 'dates are wrong ...'
+                          print('dates are wrong ...')
                           Qt.QMessageBox.warning(None,'Show archiving', 'Dates seem not in %s format'%(tformat), Qt.QMessageBox.Ok)
                           return check_values()
                       else:
-                          print 'getting values ...'
-                          print 'using %s reader' % rd.schema
+                          print('getting values ...')
+                          print(('using %s reader' % rd.schema))
                           values = rd.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
                           if not len(values) and schema=='*' and hdb.is_attribute_archived(attribute,active=True):
-                              print 'tdb failed, retrying with hdb'
+                              print('tdb failed, retrying with hdb')
                               values = hdb.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
                           if vf:
                               values = fandango.arrays.decimate_array(values)
                           if tf:
-                              print 'Filtering %d values (1/%dT)'%(len(values),tf)
+                              print(('Filtering %d values (1/%dT)'%(len(values),tf)))
                               values = fandango.arrays.filter_array(values,window=tf) #,begin=start,end=stop)
 
                           twi = klass.setup_table(attribute,start,stop,values)
@@ -215,9 +215,9 @@ class ShowHistoryDialog(fandango.Object):
                                   import codecs
                                   dd = QOptionDialog(model=options,title='CSV Options')
                                   dd.exec_()
-                                  for k,v in options.items():
+                                  for k,v in list(options.items()):
                                     options[k] = codecs.escape_decode(str(v))[0]
-                                  print options
+                                  print(options)
                                 
                                   filename = Qt.QFileDialog.getSaveFileName(parent,
                                       'File to save',
@@ -229,7 +229,7 @@ class ShowHistoryDialog(fandango.Object):
                                     try: os.system('gedit %s &'%filename)
                                     except: pass
                                   return filename
-                              except Exception,e:
+                              except Exception as e:
                                   Qt.QMessageBox.warning(None, "Warning" , "Unable to save %s\n:%s"%(filename,e))
                                   
                           def send_by_email(var=attribute,data=values,parent=twi):
@@ -239,7 +239,7 @@ class ShowHistoryDialog(fandango.Object):
                                 if ok:
                                   filename = str(save_to_file(var,data,parent,edit=False))
                                   fandango.linos.sendmail(filename,attribute,receivers=str(receivers),attachments=[filename])
-                              except Exception,e:
+                              except Exception as e:
                                 Qt.QMessageBox.warning(None, "Warning" , "Unable to send %s\n:%s"%(filename,e))
                               
                           #button.setTextAlignment(Qt.Qt.AlignCenter)
@@ -251,22 +251,22 @@ class ShowHistoryDialog(fandango.Object):
 
                           TABS.append(twi)
                           twi.connect(twi,Qt.SIGNAL('close()'),lambda o=twi: TABS.remove(o))
-                          print 'show_history done ...'
+                          print('show_history done ...')
                           return twi
-                  except Exception,e:
-                      print traceback.format_exc()
+                  except Exception as e:
+                      print((traceback.format_exc()))
                       Qt.QMessageBox.warning(None, "Warning" , "Unable to retrieve the values (%s), sorry"%e)
               else:
-                  print 'dialog closed'
+                  print('dialog closed')
                   return None
-          print 'asking for dates ...'
+          print('asking for dates ...')
           return check_values()
       else:
           Qt.QMessageBox.warning(None,'Show archiving', 'Attribute %s is not being archived'%attribute, Qt.QMessageBox.Ok)
           
 def show_history(*args,**kwargs):
   """ This method is a wrapper for HistoryDialog.show_new_dialog """
-  print('%s: PyTangoArchiving.widget.history.show_history(...)'%time2str())
+  print(('%s: PyTangoArchiving.widget.history.show_history(...)'%time2str()))
   return ShowHistoryDialog.show_new_dialog(*args,**kwargs)
 
 def __test__(args):

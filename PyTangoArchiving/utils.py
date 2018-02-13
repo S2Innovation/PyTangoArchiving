@@ -29,6 +29,7 @@ utilities for managing tango and mysql datatypes within PyTangoArchiving
 import time,datetime,os,re,traceback,xml,sys,functools
 from random import randrange
 import MySQLdb
+from functools import reduce
 
 TRACE = False
 
@@ -156,14 +157,14 @@ def sort_array(arg0,arg1=None,decimate=True,as_index=False,minstep=1e-3):
                                 minstep = minstep, as_index = as_index),
                                 sdata,0)
             
-        print time.time()-t0
+        print(time.time()-t0)
         return sdata
     
 def get_array_steps(array,minstep=0.001,as_index=False):
     # Gets an integer with all differences > minstep
     # It calcullates steps and adds True at the beginning
     as_index = False
-    print('get_array_steps(%s,%s,%s)'%(len(array),minstep,as_index))
+    print(('get_array_steps(%s,%s,%s)'%(len(array),minstep,as_index)))
     if not len(array): return array
     import numpy as np
     last,diff = array[0], np.zeros((len(array),), dtype = np.bool)
@@ -238,7 +239,7 @@ def interpolate_array(array,mint=None,maxt=None,step=None,nsteps=None):
         
 def patch_booleans(history,trace=TRACE):
     if trace: 
-        print('In patch_booleans(%d,%s)'%(len(history),(history or ('',))[0]))
+        print(('In patch_booleans(%d,%s)'%(len(history),(history or ('',))[0])))
     fromHistoryBuffer = len(history) and hasattr(history[0],'time')
     patch = 0
 
@@ -248,10 +249,10 @@ def patch_booleans(history,trace=TRACE):
             continue
         if isinstance(v,int) or isinstance(v,float): 
             break
-        if isinstance(v,basestring) and \
+        if isinstance(v,str) and \
             (not isNumber(v) and v.lower() not in ('true','false','none')): 
             break
-        if isinstance(v,basestring):
+        if isinstance(v,str):
             if isNumber(v) and v in ('1','0','1.0','0.0'): patch=1
             if v.lower() in ('true','false','none'): patch=2
             break
@@ -297,8 +298,8 @@ def get_attributes_as_event_list(attributes,start_date=None,stop_date=None,formu
         assert start_date, 'start_date argument is missing!'
         attributes = rd.get_attributes_values(attributes,start_date,stop_date)
     
-    avals = dict((k,decimate_array(v)) for k,v in attributes.items())
-    buffer = sorted((v[0],k,v[1]) for k,l in avals.items() for i,v in enumerate(l) if not i or v[1]!=l[i-1][1])
+    avals = dict((k,decimate_array(v)) for k,v in list(attributes.items()))
+    buffer = sorted((v[0],k,v[1]) for k,l in list(avals.items()) for i,v in enumerate(l) if not i or v[1]!=l[i-1][1])
     
     if formula is not None:
         cache,parsed = {},te.parse_formula(formula)
@@ -335,8 +336,8 @@ def decimate_db_table(db,table,host='',user='',passwd='',start=0,end=0,period=30
       us=True,
       )
     """
-    print('Decimating all repeated values in %s(%s) with less '
-      'than %d seconds in between.'%(table,condition,period))
+    print(('Decimating all repeated values in %s(%s) with less '
+      'than %d seconds in between.'%(table,condition,period)))
     
     db = FriendlyDB(db,host,user,passwd) if not isinstance(db,FriendlyDB) else db
     #rw = 'write_value' in ','.join([l[0] for l in db.Query("describe %s"%table)]).lower()
@@ -443,19 +444,19 @@ def decimate_db_table(db,table,host='',user='',passwd='',start=0,end=0,period=30
     cur =  db.Query(query)[0][0]
     removed = count-cur
 
-    print('decimate_db_table(%s,%s) took %d seconds to remove %d = %d - %d values'%(
-      table,condition,time.time()-date2time(now),removed,count,cur))
+    print(('decimate_db_table(%s,%s) took %d seconds to remove %d = %d - %d values'%(
+      table,condition,time.time()-date2time(now),removed,count,cur)))
 
     return removed
 
 def check_backtracking(api,schema='hdb',attributes=[],nvalues=10):
-    import archiving
+    from . import archiving
     backtrackers = []
     now = time.time()
     if not api: api = archiving.ArchivingAPI(schema)
     get_size = lambda a: api.db.Query('select count(*) from %s'%api[a].table)[0][0]
     schema = api.schema.lower()
-    for aname in (attributes or api.keys()):
+    for aname in (attributes or list(api.keys())):
         try:
             #print 'Checking %s'%aname
             attr = api[aname]
@@ -467,23 +468,23 @@ def check_backtracking(api,schema='hdb',attributes=[],nvalues=10):
             if not size: continue
             limits = (size-nvalues,nvalues) if schema=='hdb' else (0,nvalues)
             query = 'select time from %s limit %d,%d'%(attr.table,limits[0],limits[1])
-            print "%s.db.Query('%s')"%(schema,query)
+            print("%s.db.Query('%s')"%(schema,query))
             values = api.db.Query(query)
             #print values
             iterator = values if schema=='hdb' else list(reversed(values))
             for i,v in enumerate(iterator[1:]):
                 if fun.date2time(v[0])<fun.date2time(iterator[i][0]):
                     backtrackers.append(aname)
-                    print '%s ATTRIBUTE IS BACKTRACKING!!!:'# %s < %s'%(aname,v[0],iterator[i][0])
-                    try: print '\t%d: %s'%(i,iterator[i+2][0])
+                    print('%s ATTRIBUTE IS BACKTRACKING!!!:')# %s < %s'%(aname,v[0],iterator[i][0])
+                    try: print('\t%d: %s'%(i,iterator[i+2][0]))
                     except: pass
-                    print '\t%d: %s'%(i,iterator[i+1][0]) #v[0]
-                    print '\t%d: %s'%(i,iterator[i][0])
-                    if i: print '\t%d: %s'%(i,iterator[i-1][0])
-                    if i>1: print '\t%d: %s'%(i,iterator[i-2][0])
+                    print('\t%d: %s'%(i,iterator[i+1][0])) #v[0]
+                    print('\t%d: %s'%(i,iterator[i][0]))
+                    if i: print('\t%d: %s'%(i,iterator[i-1][0]))
+                    if i>1: print('\t%d: %s'%(i,iterator[i-2][0]))
                     break
         except:
-            print 'check_backtracking(%s,%s): Failed! \n%s'%(schema,aname,traceback.format_exc())
+            print('check_backtracking(%s,%s): Failed! \n%s'%(schema,aname,traceback.format_exc()))
     return list(set(backtrackers))
                     
 ###############################################################################
@@ -535,21 +536,21 @@ def check_archiving_performance(schema='hdb',attributes=[],period=24*3600*90,\
     api = pta.api(schema)
     check = dict()
     period = 24*3600*period if period < 1000 else (24*period if period<3600 else period)
-    attributes = fn.get_matching_attributes(attributes) if fn.isString(attributes) else map(str.lower,attributes)
+    attributes = fn.get_matching_attributes(attributes) if fn.isString(attributes) else list(map(str.lower,attributes))
     tattrs = [a for a in api if not attributes or a in attributes]
     excluded = [a for a in tattrs if any(fn.clmatch(e,a) for e in exclude)]
     tattrs = [a for a in tattrs if a not in excluded]
 
     #Getting Tango devices currently not running
     alldevs = set(t.rsplit('/',1)[0] for t in tattrs if api[t].archiver)
-    tdevs = filter(fn.check_device,alldevs)
+    tdevs = list(filter(fn.check_device,alldevs))
     nodevs = [d for d in alldevs if d not in tdevs]
 
     #Updating data from archiving config tables
     if not attributes:
       tattrs = sorted(a for a in api if a.rsplit('/',1)[0] in tdevs)
       tattrs = [a for a in tattrs if not any(fn.clmatch(e,a) for e in exclude)]
-    print('%d attributes will not be checked (excluded or device not running)'%(len(api)-len(tattrs)))
+    print(('%d attributes will not be checked (excluded or device not running)'%(len(api)-len(tattrs))))
     
     tarch = sorted(a for a in api if api[a].archiver)
     tnoread = sorted(t for t in tarch if t not in tattrs)
@@ -568,7 +569,7 @@ def check_archiving_performance(schema='hdb',attributes=[],period=24*3600*90,\
     t0 = [a for a in tarch if a in tattrs and not tups[api[a].table]]
     check.update((t,check_attribute(a,readable=True)) for t in t0 if not check.get(t))
     t0 = [t for t in t0 if check[t]]
-    print('%d/%d archived attributes have indexes not updated ...'%(len(t0),len(tarch)))
+    print(('%d/%d archived attributes have indexes not updated ...'%(len(t0),len(tarch))))
     if t0 and len(t0)<100: 
       vs = api.load_last_values(t0);
       tups.update((api[t].table,api[t].last_date) for t in t0)
@@ -601,7 +602,7 @@ def check_archiving_performance(schema='hdb',attributes=[],period=24*3600*90,\
     result = fn.Struct()
     result.Excluded = excluded
     result.Schema = schema
-    result.All = api.keys()
+    result.All = list(api.keys())
     result.Archived = tarch
     result.Readable = tread
     result.ArchivedAndReadable = readarch
@@ -642,13 +643,13 @@ def check_archiving_performance(schema='hdb',attributes=[],period=24*3600*90,\
       ,('%d readable array attributes are archived (Expensive)'%len(tarray))
       ,('')))
     
-    if trace: print(result.Summary)
-    print('%d readable lost,Ok = %2.1f%%, %2.1f %% over all Readables (%2.1f %% of total)'%\
-        (len(treadnotup),1e2*result.ArchRatio,1e2*result.OkRatio,1e2*result.ReadRatio))
+    if trace: print((result.Summary))
+    print(('%d readable lost,Ok = %2.1f%%, %2.1f %% over all Readables (%2.1f %% of total)'%\
+        (len(treadnotup),1e2*result.ArchRatio,1e2*result.OkRatio,1e2*result.ReadRatio)))
 
     if action:
         print('NO ACTIONS ARE GONNA BE EXECUTED, AS THESE ARE ONLY RECOMMENDATIONS')
-        print("""
+        print(("""
         api = PyTangoArchiving.ArchivingAPI('%s')
         lostdevs = sorted(set(api[a].archiver for a in result.NotUpdated))
         print(lostdevs)
@@ -658,9 +659,9 @@ def check_archiving_performance(schema='hdb',attributes=[],period=24*3600*90,\
           astor.stop_servers()
           fn.time.sleep(10.)
           astor.start_servers()
-        """%schema)
+        """%schema))
         
-    if trace: print('finished in %d seconds'%(fn.now()-ti))
+    if trace: print(('finished in %d seconds'%(fn.now()-ti)))
         
     return result
   
@@ -670,15 +671,15 @@ def restart_attributes_archivers(schema,attributes,action=False):
     devs = fandango.defaultdict(list)
     [devs[api[a].archiver].append(a) for a in attributes]
     if not action:
-      print('%d archivers to restart, call with action=True to execute it'%len(devs))
+      print(('%d archivers to restart, call with action=True to execute it'%len(devs)))
     else:
-      print('Restarting %d archivers'%len(devs))
+      print(('Restarting %d archivers'%len(devs)))
       astor = fandango.Astor()
-      astor.load_from_devs_list(devs.keys())
+      astor.load_from_devs_list(list(devs.keys()))
       astor.stop_servers()
       time.sleep(10.)
       astor.start_servers()
-    return dict((k,len(v)) for k,v in devs.items())
+    return dict((k,len(v)) for k,v in list(devs.items()))
   
 def get_attribute_pytype(attribute=None,value=None):
     assert attribute or value
@@ -716,10 +717,10 @@ def get_average_read_time(api='hdb',period=10*3600*24,N=100):
         api = PyTangoArchiving.ArchivingAPI(api)
     reader = api.get_reader()
     active = [a for a in api.get_archived_attributes() if api[a].data_type not in (1,8)]
-    target = [active[i] for i in fandango.randomize(range(len(active)))][:int(2*N)]
+    target = [active[i] for i in fandango.randomize(list(range(len(active))))][:int(2*N)]
     stats = []
     navg,tavg,count = 0,0,0
-    print('testing %s %s attributes'%(len(target),api.schema))
+    print(('testing %s %s attributes'%(len(target),api.schema)))
     for t in target:
         if count == N: 
             break
@@ -732,13 +733,13 @@ def get_average_read_time(api='hdb',period=10*3600*24,N=100):
             continue
         t1 = time.time()-t0
         if not count%10:
-            print(count,':',t,len(vs),t1)
+            print((count,':',t,len(vs),t1))
         navg += len(vs)
         tavg += t1
         count += 1
         stats.append((t1,len(vs),t))
     N = float(count)
-    print('Worst tread were: \n%s'%'\n'.join(map(str,sorted(stats)[-10:])))
+    print(('Worst tread were: \n%s'%'\n'.join(map(str,sorted(stats)[-10:]))))
     return (N, (N>0 and navg/N),(N>0 and tavg/N))
 
 def create_attribute_tables(attribute):
@@ -774,16 +775,16 @@ def import_into_db(db,table,data,delete=False,offset=0):
     """
     #raise '@TODO:TEST THIS IN ARCHIVING02 BEFORE COMMIT'
     from fandango import time2str,date2str,date2time
-    print 'import_into_db(%s,%s,[%s],%s,%s)'%(db,table,len(data),delete,offset)
+    print('import_into_db(%s,%s,[%s],%s,%s)'%(db,table,len(data),delete,offset))
     if delete: 
         limits = data[0][0],data[-1][0]
         t = db.Query("select count(*) from %s where time between '%s' and '%s'"%(table,time2str(limits[0]),time2str(limits[1])))[0]
-        print('deleting %s values from %s'%(t,table))
+        print(('deleting %s values from %s'%(t,table)))
         db.Query("delete from %s where time between '%s' and '%s'"%(table,time2str(limits[0]),time2str(limits[1])))
     if not db.Query('SHOW INDEX from %s'%table):
         try: db.Query('create index time on  %s (time)'%table)
         except: pass
-    print('inserting %d values into %s ...'%(len(data),table))
+    print(('inserting %d values into %s ...'%(len(data),table)))
     #for i,d in enumerate(data):
         #t = (fandango.time2str(d[0]+offset),d[1])
         #q = "INSERT INTO %s VALUES('%s',%s)"%(table,t[0],t[1])
@@ -796,7 +797,7 @@ def import_into_db(db,table,data,delete=False,offset=0):
             #print q[:160]
             db.Query(q)
             total += len(l)
-            print i,len(l),total
+            print(i,len(l),total)
             l = []
     return total,len(data)
 
@@ -820,16 +821,16 @@ def import_into_db(db,table,data,delete=False,offset=0):
 def repair_dedicated_attributes(api,attrs=None,load=True,restart=False):
     api.load_attribute_modes()
     tdedi = api.load_dedicated_archivers()
-    tdediattrs = dict((a,d) for d,v in tdedi.items() for a in v)
+    tdediattrs = dict((a,d) for d,v in list(tdedi.items()) for a in v)
     newconfig = dict((a,tdediattrs[a]) for a in (attrs or tdediattrs) if a in tdediattrs and a in api and api[a].archiver and tdediattrs[a]!=api[a].archiver)
     #rows = dict((a,tdb.db.Query('select ID,archiver,start_date from amt where STOP_DATE is NULL and ID=%d'%api[a].ID)) for a in newconfig.keys() if a in api)
     if restart:
         astor = fandango.Astor('ArchivingManager/1')
-        astor.load_from_devs_list(list(set([api[a].archiver for a in newconfig]+newconfig.values())))
+        astor.load_from_devs_list(list(set([api[a].archiver for a in newconfig]+list(newconfig.values()))))
         astor.stop_servers()
     if load:
-        print 'Updating %d dedicated attributes in amt.'%len(newconfig)
-        for a,d in newconfig.items():
+        print('Updating %d dedicated attributes in amt.'%len(newconfig))
+        for a,d in list(newconfig.items()):
             api.db.Query("update amt set archiver='%s' where ID=%d and STOP_DATE is NULL"%(d,api[a].ID))
     if restart:
         astor.start_servers()
@@ -844,12 +845,12 @@ def check_archived_attribute_names(device='*',attribute='*',schema='hdb'):
       if clmatch(device,d):
         if check_device(d):
           arch = [a for a in api if a.startswith(d+'/')]
-          curr = map(str.lower,get_matching_attributes(d+'/*'))
+          curr = list(map(str.lower,get_matching_attributes(d+'/*')))
           un = list(a for a in arch 
               if clmatch(attribute,a.rsplit('/',1)[-1])
               and a not in curr)
           if un:
-            print('%s: %s'%(d,len(un)))
+            print(('%s: %s'%(d,len(un))))
             unmatch.extend(un)
     return sorted(unmatch)
 
@@ -859,8 +860,8 @@ def rename_archived_attributes(attribs,load=False,restart=False,modes={'MODE_P':
     PyTangoArchiving.utils.rename_archived_attributes({oldname:newname}) 
     The following actions must be automated for both HDB and TDB
     """
-    import archiving
-    attribs = dict((k.lower(),v.lower()) for k,v in attribs.items())
+    from . import archiving
+    attribs = dict((k.lower(),v.lower()) for k,v in list(attribs.items()))
     for schema in schemas:
         api = archiving.ArchivingAPI(schema)
         api.load_dedicated_archivers()
@@ -875,17 +876,17 @@ def rename_archived_attributes(attribs,load=False,restart=False,modes={'MODE_P':
                 servers[fandango.tango.get_device_info(arch).server].add(arch)
                 archivers[arch].add(a)
         astor = fandango.Astor()
-        if load: astor.load_from_devs_list(archivers.keys())
+        if load: astor.load_from_devs_list(list(archivers.keys()))
         
         #Check if they are dedicated 
         dedicated = dict((a,api[a].dedicated.lower()) for a in targets if api[a].dedicated)
         print('>> update dedicated')
         properties = []
         for arch in set(dedicated.values()):
-            prop = map(str.lower,api.tango.get_device_property(arch,['reservedAttributes'])['reservedAttributes'])
+            prop = list(map(str.lower,api.tango.get_device_property(arch,['reservedAttributes'])['reservedAttributes']))
             nprop = [attribs.get(p,p) for p in prop]
             properties.append((arch,nprop))
-        print properties
+        print(properties)
         if load: [api.tango.put_device_property(arch,{'reservedAttributes':nprop}) for arch,nprop in properties]
             
         #Store the list of modes, 
@@ -893,17 +894,17 @@ def rename_archived_attributes(attribs,load=False,restart=False,modes={'MODE_P':
         #modes = dict.fromkeys(modes_to_string(api[a].modes) for a in targets)
         #[modes.__setitem__(k,[attribs[a] for a in targets if modes_to_string(api[a].modes)==k]) for k in modes.keys()]
         
-        for server,archs in servers.items():
+        for server,archs in list(servers.items()):
             if restart or modes is not None:
                 for arch in archs:
                     atts = archivers[arch]
-                    print('>> stopping archiving: %s'%atts)
+                    print(('>> stopping archiving: %s'%atts))
                     if load: api.stop_archiving(atts)
-            print('>> stopping archiver %s: %s'%(server,archs))
+            print(('>> stopping archiver %s: %s'%(server,archs)))
             if load: astor.stop_servers(server)
             for arch in archs:
                 atts = archivers[arch]
-                print('>> modifying adt table for %s attributes (%d)'%(arch,len(atts)))
+                print(('>> modifying adt table for %s attributes (%d)'%(arch,len(atts))))
                 queries = []
                 for name in atts:
                     ID = targets[name]
@@ -911,9 +912,9 @@ def rename_archived_attributes(attribs,load=False,restart=False,modes={'MODE_P':
                     device,att_name = name.rsplit('/',1)
                     domain,member,family = device.split('/')
                     queries.append("update adt set full_name='%s',device='%s',domain='%s',family='%s',member='%s',att_name='%s' where ID=%d" % (name,device,domain,family,member,att_name,ID))
-                print '\n'.join(queries[:10]+['...'])
+                print('\n'.join(queries[:10]+['...']))
                 if load: [api.db.Query(query) for query in queries]
-            print('>> start %s archivers '%server)
+            print(('>> start %s archivers '%server))
             if load: 
                 time.sleep(10)
                 astor.start_servers(server)
@@ -924,9 +925,9 @@ def rename_archived_attributes(attribs,load=False,restart=False,modes={'MODE_P':
             fandango.Astor("ArchivingManager/*").start_servers()
             time.sleep(20)
         if restart or modes:
-            print('>> start archiving: %s'%modes)
+            print(('>> start archiving: %s'%modes))
             if load: 
-                api.start_archiving(attribs.values(),modes)
+                api.start_archiving(list(attribs.values()),modes)
                 #for m,atts in modes.items():
                     #m = modes_to_dict(m)
                     #api.start_archiving(atts,m)
@@ -963,17 +964,17 @@ def repair_attribute_names(db,attrlist=None,upper=False,update=False):
             if full_name.rsplit('/',1)[0] == fname.rsplit('/',1)[0]: continue #Nothing to update
             domain,family,member = device.split('/')
             q = "update adt set domain = '%s',family = '%s',member = '%s',device = '%s',full_name = '%s', att_name = '%s' where id=%s" % (domain,family,member,device,full_name,att_name,ID)
-            print "%s: %s"%(fname,q)
+            print("%s: %s"%(fname,q))
             if update: db.Query(q) 
-        except Exception,e:
-            print '%s: %s'%(fname,e)
-            print traceback.format_exc()
+        except Exception as e:
+            print('%s: %s'%(fname,e))
+            print(traceback.format_exc())
             break
             failed += 1
     
     if update: db.Query('COMMIT')
     ok = len(allnames)-failed
-    if update: print '%d names updated' % (len(attrlist or allnames)-failed)
+    if update: print('%d names updated' % (len(attrlist or allnames)-failed))
     return ok
     
 def force_stop_attributes(schema,attr_list):
@@ -989,7 +990,7 @@ def force_stop_attributes(schema,attr_list):
     astor.stop_servers()
     for s in attr_list:
         query = "update amt set stop_date=now() where ID = %s and stop_date is NULL"%api[s].ID
-        print query
+        print(query)
         api.db.Query(query)
     astor.start_servers()
     
@@ -1007,7 +1008,7 @@ def check_attribute_modes(old_value,new_value,modes,tolerance=0.):
     elif fun.isNumber(new_value[1]): diff = abs(new_value[1]-old_value[1])
     else: diff = [0,1e9][new_value[1]!=old_value[1]] # If not a number then any difference must be archived
 
-    for mode,args in modes.items():
+    for mode,args in list(modes.items()):
         period = (1.+tolerance)*args[0]/1000.
         if 'MODE_P' in mode:
             result['MODE_P'] = ellapsed<period
@@ -1025,12 +1026,12 @@ def translate_attribute_modes(modes):
     """
     Translates between the modes names used in database and in the Java API
     """
-    dct = DB_MODES if any(k in str(modes) for k in DB_MODES) else dict((v,k) for k,v in DB_MODES.items())
-    replace_modes = lambda k: reduce((lambda x,t:x.replace(*t)),dct.items(),k)
+    dct = DB_MODES if any(k in str(modes) for k in DB_MODES) else dict((v,k) for k,v in list(DB_MODES.items()))
+    replace_modes = lambda k: reduce((lambda x,t:x.replace(*t)),list(dct.items()),k)
     if isinstance(modes,str):
         return replace_modes(modes)
     if isinstance(modes,dict):
-        return dict((replace_modes(k),v) for k,v in modes.items())
+        return dict((replace_modes(k),v) for k,v in list(modes.items()))
     
 def modes_to_string(modestring,translate=True):
     """
@@ -1076,12 +1077,12 @@ def get_duplicated_archivings(schema='hdb'):
     api = PyTangoArchiving.ArchivingAPI(schema)
     check = dict((a,list()) for a in api)
     archis = dict((h,check_device(h,command='StateDetailed')) for h in sorted(api.get_archivers()))
-    for h in [a for a,v in archis.items() if v]:
+    for h in [a for a,v in list(archis.items()) if v]:
         sd = api.get_archiver(h).StateDetailed().lower()
         for c in check:
             if c.lower() in sd.split():
                 check[c].append(h)
-    return sorted([(c,v) for c,v in check.items() if len(v)>1])
+    return sorted([(c,v) for c,v in list(check.items()) if len(v)>1])
 
 def reportArchiving():
     db = Database()
@@ -1092,14 +1093,14 @@ def reportArchiving():
     for m in range(1,nDS+1):
         for n in range(1,rateDS+1):
             member = 'archiving/hdbarchiver/'+'%02d'%m+'-'+'%02d'%n
-            print 'Reporting HdbArchiver: ',member
+            print('Reporting HdbArchiver: ',member)
             dp=DeviceProxy(member)
             #print '\tStatus is:\n\t', dp.command_inout('Status')
             #print '\tState detailed is:\n\t', dp.command_inout('StateDetailed')
-            print '\tScalar Charge is:\n\t', dp.read_attribute('scalar_charge').value
+            print('\tScalar Charge is:\n\t', dp.read_attribute('scalar_charge').value)
             a=a+dp.read_attribute('scalar_charge').value
     
-    print 'Total Scalar Charge is ... ',a
+    print('Total Scalar Charge is ... ',a)
 
 ## @name Methods for repairing the databases
 # @{
@@ -1132,12 +1133,12 @@ def RemoveWrongValues(db,table,column,null_value,ranges,dates,extra_clauses='',c
     if extra_clauses:
         where = " AND (%s)" % extra_clauses
 
-    print 'the query is : ', query+where
+    print('the query is : ', query+where)
     q.execute(query+where)
     if check:
         result = q.fetchone()[0]
-        print 'result is %s; type is %s'%(result,type(result))
-        print 'Values to remove: %d'%int(result)
+        print('result is %s; type is %s'%(result,type(result)))
+        print('Values to remove: %d'%int(result))
     else:
         result = True
     db.close()
@@ -1169,24 +1170,24 @@ def RepairColumnNames():
     q.execute('select ID,full_name,writable from adt')
     adt=q.fetchall()
     
-    print 'There are %d attribute_ID registered in the database'%len(adt)
+    print('There are %d attribute_ID registered in the database'%len(adt))
     done=0
     for line in adt:
         ID = line[0]
         full_name = line[1]
         writable = line[2]
-        print 'ID %05d: %s, w=%d'%(ID,full_name,writable)
+        print('ID %05d: %s, w=%d'%(ID,full_name,writable))
         q.execute('describe %s'%get_table_name(ID))
         describe=q.fetchall()
         col_name=describe[1][0]
         col_type=describe[1][1]
         if writable==int(PyTango.AttrWriteType.READ) and col_name!='value':
             query='ALTER TABLE %s CHANGE COLUMN %s value %s AFTER time'%(get_table_name(ID),col_name,col_type)
-            print 'query: ',query
+            print('query: ',query)
             q.execute(query)
             done+=1
             
-    print 'Attributes repaired: %d'%done    
+    print('Attributes repaired: %d'%done)    
                 
 ##@}
 
@@ -1201,9 +1202,9 @@ def listLastTdbTime():
     attribs = q.fetchall()
     
     attrtables = [ get_table_name(i[0]) for i in attribs ]
-    print str(len(attribs))+' attributes being archived.'
+    print(str(len(attribs))+' attributes being archived.')
     
-    print 'Searching newest/oldest timestamps on attribute tables ...'
+    print('Searching newest/oldest timestamps on attribute tables ...')
     results = []
     tmin,tmax = None,None
     
@@ -1218,7 +1219,7 @@ def listLastTdbTime():
         if tmin is None or date2<tmin:
             tmin = date2
         results.append((date,date2,a))
-        print '\r%05d/%05d:\tOldest:%s;\tNewest:%s'%(i,len(attrtables),str(tmin),str(tmax)),
+        print('\r%05d/%05d:\tOldest:%s;\tNewest:%s'%(i,len(attrtables),str(tmin),str(tmax)), end=' ')
         sys.stdout.flush()
         
     results.sort()
@@ -1233,6 +1234,6 @@ def KillAllServers(klass = 'HdbArchiver'):
     processes = linos.shell_command('ps uax').split('\n')
     archivers = [s for s in processes if '%s.%s'%(klass,klass) in s]
     for a in archivers:
-        print 'Killing %s' % a[1:]
+        print('Killing %s' % a[1:])
         pid = a.split()[1]
         linos.shell_command('kill -9 %s'%pid)

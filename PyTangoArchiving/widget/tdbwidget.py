@@ -21,7 +21,7 @@ class attributeChooser(TaurusAttributeChooser):
         self.dev_name = str(self.ui.devList.currentItem().text())
         try:
             items=[str(a.name) for a in PyTango.DeviceProxy(self.dev_name).attribute_list_query()]
-        except Exception,e:
+        except Exception as e:
             self.warning('Unable to contact with device %s: %s'%(self.dev_name,str(e)))
             items=[]
         items.sort(key=lambda x:x.lower()) #sort the attributes (case insensitive!)
@@ -40,7 +40,7 @@ class attributeChooser(TaurusAttributeChooser):
         device += '*'
         try:
             items = list(self.getDb().get_device_exported(device))
-        except Exception,e:
+        except Exception as e:
             self.warning('Unable to contact with device %s: %s'%(device,str(e)))
             items=[]
         self.ui.devList.clear()
@@ -72,7 +72,7 @@ class historyButton(Qt.QPushButton):
 
     def show_history(self, attribute):
         TABS=[]
-        print 'getting archiving readers ...'
+        print('getting archiving readers ...')
         from PyTangoArchiving import Reader
         hdb = Reader(db='hdb',schema='hdb')
         tdb = Reader(db='tdb',schema='tdb')
@@ -82,7 +82,7 @@ class historyButton(Qt.QPushButton):
         attribute = attribute.lower()
 
         if attribute in hdb.get_attributes() or attribute in tdb.get_attributes():
-            print '%s is being archived' % attribute
+            print(('%s is being archived' % attribute))
             di = Qt.QDialog()
             wi = di #QtGui.QWidget(di)
             wi.setLayout(Qt.QGridLayout())
@@ -104,21 +104,21 @@ class historyButton(Qt.QPushButton):
             def check_values():
                 di.exec_()
                 if di.result():
-                    print 'checking result ...'
+                    print('checking result ...')
                     start,stop = str(begin.text()),str(end.text())
                     if not all(re.match('[0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+:[0-9]+',str(s).strip()) for s in (start,stop)):
-                        print 'dates are wrong ...'
+                        print('dates are wrong ...')
                         Qt.QMessageBox.warning(None,'Show archiving', 'Dates seem not in %s format'%(tformat), Qt.QMessageBox.Ok)
                         return check_values()
                     else:
-                        print 'getting values ...'
+                        print('getting values ...')
                         reader = tdb if str2epoch(start)>(time.time()-5*24*3600.) and attribute in tdb.get_attributes() else hdb
-                        print 'using %s reader' % reader.schema
+                        print(('using %s reader' % reader.schema))
                         values = reader.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
                         if not len(values) and reader is tdb and attribute in hdb.get_attributes():
-                            print 'tdb failed, retrying with hdb'
+                            print('tdb failed, retrying with hdb')
                             values = hdb.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
-                        print 'drawing table from %d values' % len(values)
+                        print(('drawing table from %d values' % len(values)))
                         tab = Qt.QTableWidget()
                         tab.setWindowTitle('%s: %s to %s' % (attribute,start,stop))
                         tab.setRowCount(len(values))
@@ -133,12 +133,12 @@ class historyButton(Qt.QPushButton):
                         tab.horizontalHeader().setStretchLastSection(True)
                         TABS.append(tab)
                         tab.connect(tab,Qt.SIGNAL('close()'),lambda o=tab: TABS.remove(o))
-                        print 'show_history done ...'
+                        print('show_history done ...')
                         return tab
                 else:
-                    print 'dialog closed'
+                    print('dialog closed')
                     return None
-            print 'asking for dates ...'
+            print('asking for dates ...')
             return check_values()
         else:
             Qt.QMessageBox.warning(None,'Show archiving', 'Attribute %s is not being archived'%attribute, Qt.QMessageBox.Ok) 
@@ -369,13 +369,13 @@ class Ui_Form(object):
                         else: self.tac.tdb.api.start_archiving(attrs, cmd)
                     except:
                         Qt.QMessageBox.critical(self._Form,"Error",'Cannot start archiving process.\nCheck the state of archiving managers.', QtGui.QMessageBox.AcceptRole, QtGui.QMessageBox.AcceptRole)
-                        print(traceback.format_exc())
+                        print((traceback.format_exc()))
 
                     self.tac.beingArchived=[a.lower() for a in self.tac.tdb if self.tac.tdb.is_attribute_archived(a.lower())] #update archived list
                     self.onUpdate(attrs)
                     self.tac.setNewDevName()
         except:
-            print(traceback.format_exc())
+            print((traceback.format_exc()))
 
     def onStop(self):
         toStop=[att.lower() for att in self.tf.getModel() if att.lower() in self.tac.beingArchived]
@@ -415,14 +415,14 @@ class Ui_Form(object):
                 self.pushButtonStop.setEnabled(True)
                 self.pushButtonStop.setText('Stop ('+str(len(toStop))+')')
                 modes=self.tac.tdb.get(toStop[0]).modes
-                if 'MODE_P' in modes.keys():
+                if 'MODE_P' in list(modes.keys()):
                     self.modepLineEdit.setText(str(int(modes['MODE_P'][0]/1000)))
-                if 'MODE_R' in modes.keys():
+                if 'MODE_R' in list(modes.keys()):
                     if len(modes['MODE_R']) == 3: 
                         self.moderLineEdit.setText(str(int(modes['MODE_R'][0]/1000)))
                         self.moderLowerLimitPercentLineEdit.setText(str(float(modes['MODE_R'][1])))
                         self.moderUpperLimitPercentLineEdit.setText(str(float(modes['MODE_R'][2])))
-                if 'MODE_A' in modes.keys(): 
+                if 'MODE_A' in list(modes.keys()): 
                     if len(modes['MODE_A']) == 3: 
                         self.modeaLineEdit.setText(str(int(modes['MODE_A'][0]/1000)))
                         self.modeaLowerLimitLineEdit.setText(str(int(modes['MODE_A'][1])))

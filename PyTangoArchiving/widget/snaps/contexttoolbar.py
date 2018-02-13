@@ -1,5 +1,5 @@
 from PyQt4 import Qt
-from snapdialogs import SnapSaver, SnapLoader
+from .snapdialogs import SnapSaver, SnapLoader
 
 
 class ContextToolBar(Qt.QToolBar):

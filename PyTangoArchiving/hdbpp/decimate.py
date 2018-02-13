@@ -22,7 +22,7 @@ if not data_types:
 else:
     data_types = [d.replace('att_','') for d in data_types]
     
-print('Decimating %s types between %s and %s: %s'%(db_name,tstart,tend,data_types))
+print(('Decimating %s types between %s and %s: %s'%(db_name,tstart,tend,data_types)))
 
 for data_type in data_types:
 
@@ -42,7 +42,7 @@ for data_type in data_types:
         table = partitions[0][1]
     else:
         table = 'att_'+data_type
-    print('%s has %d attributes in %d partitions'%(table,len(attrs),len(partitions)))
+    print(('%s has %d attributes in %d partitions'%(table,len(attrs),len(partitions))))
     c0 = api.Query('select count(*) from %s '%table)
 
     import re
@@ -72,7 +72,7 @@ for data_type in data_types:
             intervals.append((fd.time2str(ts+(i-1)*tinc),
                               fd.time2str(ts+i*tinc),None))
         
-    print('%d intervals in %s'%(len(intervals),table))
+    print(('%d intervals in %s'%(len(intervals),table)))
         
     for t0,t1,p in intervals:
         
@@ -90,11 +90,11 @@ for data_type in data_types:
         if p: api.Query('alter table %s optimize partition %s'%(table,p))
 
     q = 'repair table %s;'%table
-    print('\n'+q)
+    print(('\n'+q))
     api.Query(q)
     c1 = api.Query('select count(*) from %s '%table)
-    print('\n\n%s size reduced from %s to %s'%(table,c0,c1))
-    print('ellapsed %d seconds'%(time.time()-tt0))
+    print(('\n\n%s size reduced from %s to %s'%(table,c0,c1)))
+    print(('ellapsed %d seconds'%(time.time()-tt0)))
     
     
     

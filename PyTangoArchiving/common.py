@@ -43,7 +43,7 @@ from fandango.dicts import CaselessDict,CaselessDefaultDict
 from fandango.log import Logger
 from fandango.objects import Object
 
-from utils import PyTango,ServersDict
+from .utils import PyTango,ServersDict
     
 def int2DevState(n): return str(PyTango.DevState.values[n])    
 def int2DevType(n): return str(PyTango.ArgType.values[n])    
@@ -75,7 +75,7 @@ class CommonAPI(Object,fandango.SingletonMap):
         if host is None:
             prop = self.tango.get_class_property('%sArchiver'%schema,['DbHost'])['DbHost']
             if not prop: 
-                print('ERROR: %sArchiver.DbHost property not defined!'%schema)
+                print(('ERROR: %sArchiver.DbHost property not defined!'%schema))
                 self.host = None
             else:
                 self.host = prop[0]
@@ -86,10 +86,10 @@ class CommonAPI(Object,fandango.SingletonMap):
         self.dbs={} #pointers to Archiving databases
         
         self.ArchivingClasses = classes or self.get_archiving_classes()
-        self.ArchiverClass = (k for k in self.ArchivingClasses if 'Archiver' in k).next()
-        self.ManagerClass = (k for k in self.ArchivingClasses if 'Manager' in k).next()
-        self.ExtractorClass = (k for k in self.ArchivingClasses if 'Extractor' in k).next()
-        try: self.WatcherClass = (k for k in self.ArchivingClasses if 'Watcher' in k).next()
+        self.ArchiverClass = next((k for k in self.ArchivingClasses if 'Archiver' in k))
+        self.ManagerClass = next((k for k in self.ArchivingClasses if 'Manager' in k))
+        self.ExtractorClass = next((k for k in self.ArchivingClasses if 'Extractor' in k))
+        try: self.WatcherClass = next((k for k in self.ArchivingClasses if 'Watcher' in k))
         except: self.WatcherClass = None
         
         self.loads=CaselessDefaultDict(lambda k:0) #a dict with the archiving load for each device
@@ -119,10 +119,10 @@ class CommonAPI(Object,fandango.SingletonMap):
     def __del__(self):
         try:
             self.log.debug( 'Deleting ArchivingAPI ...')
-            for p in self.proxies.values():
+            for p in list(self.proxies.values()):
                 del p
             del self.tango
-            for d in self.dbs.values():
+            for d in list(self.dbs.values()):
                 del d
         except:
             pass #print('Unable to delete API object')
@@ -130,7 +130,7 @@ class CommonAPI(Object,fandango.SingletonMap):
     def __repr__(self):
         '''def server_Report(self): The status of Archiving device servers '''
         report='The status of %s Archiving device servers is:\n'%self.schema
-        for k,v in self.servers.items():
+        for k,v in list(self.servers.items()):
             report+='%s:\t%s\n'%(k,v.state)
         if self.WatcherClass:
             try: report+=self.proxies(
@@ -153,12 +153,12 @@ class CommonAPI(Object,fandango.SingletonMap):
             next = randrange(len(remaining))
             devname = remaining.pop(next)
             device = self.servers.proxies[devname]
-            print devname
+            print(devname)
             try:
                 device.ping()
                 device.set_timeout_millis(timeout)
                 break
-            except Exception,e: 
+            except Exception as e: 
                 self.log.info('%s unreachable: %s'%(devname,str(e)))
         return device
 

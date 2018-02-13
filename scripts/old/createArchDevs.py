@@ -15,10 +15,10 @@ def addArchDev(server,instance,member):
 	
 createServers = True
 if createServers:
-	print 'Creating Archiving device Servers: \n', \
+	print(('Creating Archiving device Servers: \n', \
 		'ArchivingManager/1, SnapManager/1, HdbArchiver/01-',nDS,', TdbArchiver/01-',nDS, \
 		'SnapArchiver/1, HdbExtractor/1, TdbExtractor/1, SnapExtractor/1, ',\
-		'HdbArchivingWatcher/1, TdbArchivingWatcher/1'
+		'HdbArchivingWatcher/1, TdbArchivingWatcher/1'))
 	addArchDev('ArchivingManager','1','1')
 	addArchDev('SnapManager','1','1')
 	for m in range(1,nDS+1):
@@ -38,13 +38,13 @@ if createServers:
 	addArchDev('TdbArchivingWatcher','1','1')
 	pass
 
-print 'Setting HdbArchiver class properties'
+print('Setting HdbArchiver class properties')
 dclass = 'HdbArchiver'
 db.put_class_property(dclass,{'DbHost':[archHost]})
 db.put_class_property(dclass,{'DbName':['hdb']})
 #db.put_class_property(dclass,{'Facility':['false']})
 
-print 'Setting TdbArchiver device properties'
+print('Setting TdbArchiver device properties')
 for m in range(1,nDS+1):
 	for n in range(1,rateDS+1):
 		dname = 'archiving/tdbarchiver/'+'%02d'%m+'-'+'%02d'%n
@@ -52,13 +52,13 @@ for m in range(1,nDS+1):
 		db.put_device_property(dname,{'DbPath':['/tmp/archiving/tdb']})
 		db.put_device_property(dname,{'DiaryPath':['/tmp/archiving/tdb']})
 
-print 'Setting TdbArchiver class properties'
+print('Setting TdbArchiver class properties')
 dclass = 'TdbArchiver'
 db.put_class_property(dclass,{'DbHost':[archHost]})
 db.put_class_property(dclass,{'DbName':['tdb']})
 #db.put_class_property(dclass,{'Facility':['false']})
 
-print 'Setting snaparchiver device properties'
+print('Setting snaparchiver device properties')
 dname = 'archiving/snaparchiver/1'
 db.put_device_property(dname,{'beansFileName':['beansMySQL.xml']})
 #db.put_device_property(dname,{'dbHost':['localhost']})
@@ -67,31 +67,31 @@ db.put_device_property(dname,{'beansFileName':['beansMySQL.xml']})
 #db.put_device_property(dname,{'dbUser':['archiver']})
 #db.put_class_property(dname,{'facility':['false']})
 
-print 'Setting snaparchiver class properties'
+print('Setting snaparchiver class properties')
 dclass = 'SnapArchiver'
 db.put_class_property(dclass,{'DbHost':[archHost]})
 db.put_class_property(dclass,{'DbName':['snap']})
 db.put_class_property(dclass,{'dbSchema':['snap']})
 
-print 'Setting hdbextractor device properties'
+print('Setting hdbextractor device properties')
 dclass = 'HdbExtractor'
 db.put_class_property(dclass,{'dbHost':[archHost]})
 #db.put_device_property(dname,{'dbPassword':['extractor']})
 #db.put_device_property(dname,{'dbUser':['extractor']})
 
-print 'Setting tdbextractor device properties'
+print('Setting tdbextractor device properties')
 dclass = 'TdbExtractor'
 db.put_class_property(dclass,{'dbHost':[archHost]})
 #db.put_device_property(dname,{'dbPassword':['extractor']})
 #db.put_device_property(dname,{'dbUser':['extractor']})
 
-print 'Setting snapextractor device properties'
+print('Setting snapextractor device properties')
 dclass = 'SnapExtractor'
 db.put_class_property(dclass,{'dbHost':[archHost]})
 #db.put_device_property(dname,{'dbPassword':['extractor']})
 #db.put_device_property(dname,{'dbUser':['extractor']})
 
-print 'Setting hdbarchivingwatcher device properties'
+print('Setting hdbarchivingwatcher device properties')
 dname = 'archiving/hdbarchivingwatcher/1'
 db.put_device_property(dname,{'doArchiverDiagnosis':['True']})
 db.put_device_property(dname,{'doStartOnInitDevice':['True']})
@@ -99,13 +99,13 @@ db.put_device_property(dname,{'macroPeriod':['7200']})
 db.put_device_property(dname,{'hdbPwd':['browser']})
 db.put_device_property(dname,{'hdbUser':['browser']})
 
-print 'Setting hdbarchivingwatcher class properties'
+print('Setting hdbarchivingwatcher class properties')
 dclass = 'HdbArchivingWatcher'
 db.put_class_property(dclass,{'DbHost':[archHost]})
 db.put_class_property(dclass,{'DbName':['hdb']})
 #db.put_class_property(dclass,{'Facility':['false']})
 
-print 'Setting tdbarchivingwatcher device properties'
+print('Setting tdbarchivingwatcher device properties')
 dname = 'archiving/tdbarchivingwatcher/1'
 db.put_device_property(dname,{'doArchiverDiagnosis':['True']})
 db.put_device_property(dname,{'doStartOnInitDevice':['True']})
@@ -113,7 +113,7 @@ db.put_device_property(dname,{'macroPeriod':['7200']})
 db.put_device_property(dname,{'tdbPwd':['browser']})
 db.put_device_property(dname,{'tdbUser':['browser']})
 
-print 'Setting tdbarchivingwatcher class properties'
+print('Setting tdbarchivingwatcher class properties')
 dclass = 'TdbArchivingWatcher'
 db.put_class_property(dclass,{'DbHost':[archHost]})
 db.put_class_property(dclass,{'DbName':['tdb']})

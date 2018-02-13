@@ -77,14 +77,14 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #    Device destructor
 #------------------------------------------------------------------
     def delete_device(self):
-        print "[Device delete_device method] for device",self.get_name()
+        print(("[Device delete_device method] for device",self.get_name()))
 
 
 #------------------------------------------------------------------
 #    Device initialization
 #------------------------------------------------------------------
     def init_device(self):
-        print "In ", self.get_name(), "::init_device()"
+        print(("In ", self.get_name(), "::init_device()"))
         self.set_state(PyTango.DevState.ON)
         self.get_device_properties(self.get_device_class())
         
@@ -133,8 +133,8 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
         else:
             self.configs = sorted(files.GetConfigFiles())
         
-        print '#'*80
-        print '%s, In archiving_report.py: reading %s, generating %s' % (time.ctime(),self.configs or self.domreg,self.HtmlFile)
+        print(('#'*80))
+        print(('%s, In archiving_report.py: reading %s, generating %s' % (time.ctime(),self.configs or self.domreg,self.HtmlFile)))
         self.cron = fandango.threads.CronTab(self.CronTab,task=self.CheckAll,start=True,process=True,keep=10,trace=True)
                         
 
@@ -142,7 +142,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #    Always excuted hook method
 #------------------------------------------------------------------
     def always_executed_hook(self):
-        print "In ", self.get_name(), "::always_excuted_hook()"
+        print(("In ", self.get_name(), "::always_excuted_hook()"))
         
         try:
             while True:
@@ -152,7 +152,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
                 try:
                     self.results[result[0]] = result[1]
                 except:
-                    print 'Exception in always_executed_hook(): queue.get(): \n%s'%traceback.format_exc()
+                    print(('Exception in always_executed_hook(): queue.get(): \n%s'%traceback.format_exc()))
         except: pass
             
 
@@ -165,7 +165,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #    Read Attribute Hardware
 #------------------------------------------------------------------
     def read_attr_hardware(self,data):
-        print "In ", self.get_name(), "::read_attr_hardware()"
+        print(("In ", self.get_name(), "::read_attr_hardware()"))
 
 
 
@@ -184,7 +184,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #    argout: DevString    
 #------------------------------------------------------------------
     def CheckFile(self, argin):
-        print "In ", self.get_name(), "::CheckFile()"
+        print(("In ", self.get_name(), "::CheckFile()"))
         #    Add your own code here
         
         return argout
@@ -197,7 +197,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #    argout: DevString    
 #------------------------------------------------------------------
     def CheckAll(self, argin=None):
-        print "In ", self.get_name(), "::CheckAll()"
+        print(("In ", self.get_name(), "::CheckAll()"))
         #    Add your own code here
         
         confis,domreg,argfilters,argexclude = self.configs,self.domreg,self.argfilters,self.argexclude
@@ -208,23 +208,23 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
         polizons = {}
 
         for schema in ('hdb','tdb'):
-            print 'Checking %s configurations' % schema.upper()
+            print(('Checking %s configurations' % schema.upper()))
         
             api = PyTangoArchiving.ArchivingAPI(schema,load=True)    
             active = [a for a in api if api[a].archiver]
             if not active: #No attributes being archived in the database
                 continue
             dedicated = list(set([a for a in active if api[a].dedicated]))
-            print 'There are %d dedicated attributes' % (len(dedicated))
+            print(('There are %d dedicated attributes' % (len(dedicated))))
             
             #Initializing variables
             results[schema] = {}
             summary[schema] = {'active':len(active),'dedicated':len(dedicated)}
             polizons[schema] = {}
             up,down,idle,archivers = [],[],[],api.check_archivers()
-            for k,v in archivers.items():
+            for k,v in list(archivers.items()):
                 {True:up,False:down,None:idle}[v].append(k)
-            summary[schema].update({'up':up,'down':down,'idle':idle,'archivers':archivers.keys()})
+            summary[schema].update({'up':up,'down':down,'idle':idle,'archivers':list(archivers.keys())})
             
             ############################################################################
             #Checking Attribute Configuration CSV files
@@ -232,11 +232,11 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
             if configs:
                 polizons[schema] = active[:]
                 for c in configs:
-                    filters = dict(argfilters.items())
-                    exclude = dict(argexclude.items())
+                    filters = dict(list(argfilters.items()))
+                    exclude = dict(list(argexclude.items()))
                     try:
-                        print '%s: Checking file %s' % (schema.upper(),c.split('/')[-1])
-                        print 'filters: %s ; exclude: %s' % (filters,exclude)
+                        print(('%s: Checking file %s' % (schema.upper(),c.split('/')[-1])))
+                        print(('filters: %s ; exclude: %s' % (filters,exclude)))
                         
                         check = files.CheckArchivingConfiguration(
                             c,
@@ -250,15 +250,15 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
                         #Creating a summary of check results:
                         results[schema][c] = check
                         #check['rate'] = (float(len(check['ok']))/len(check['all'])) if (check['ok'] and check['all']) else 0.                    
-                        print ('\n'.join('%s: %s'%(k.upper(),self.summarize(v)) for k,v in results[schema][c].items() if v))
+                        print(('\n'.join('%s: %s'%(k.upper(),self.summarize(v)) for k,v in list(results[schema][c].items()) if v)))
                         [polizons[schema].remove(a.lower()) for a in check['all'] if a.lower() in polizons[schema]] #Checking how many attributes are 'alien' to specs
                         flie = open('/tmp/%s.%s.pck'%(c.split('/')[-1].rsplit('.',1)[0],schema),'w')
                         pickle.dump((c,check),flie)
                         flie.close()
-                    except Exception,e:
+                    except Exception as e:
                         if c in results[schema]: results[schema].pop(c)
                         failed['%s:%s'%(schema,c)] = traceback.format_exc()
-                        print failed['%s:%s'%(schema,c)]
+                        print((failed['%s:%s'%(schema,c)]))
                                         
             ############################################################################
             #Doing a generic check of the archiving, ignoring configurations
@@ -267,33 +267,33 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
                 domains = defaultdict(list)
                 [domains[a.split('/')[0].lower()].append(a) for a in api if fun.matchCl(domreg,a.split('/')[0]) and api[a].archiver]
                 
-                print ('Checking %s attributes by domain(%s): %s'%(schema,domreg,[(k,len(v)) for k,v in domains.items()]))
-                for d,attributes in domains.items():
-                    print '%d attributes in domain %s' % (len(attributes),d)
+                print(('Checking %s attributes by domain(%s): %s'%(schema,domreg,[(k,len(v)) for k,v in list(domains.items())])))
+                for d,attributes in list(domains.items()):
+                    print(('%d attributes in domain %s' % (len(attributes),d)))
                     ok,lost,goods,bads,retried = [],[],[],[],[]
                     try:            
                         [(goods if utils.check_attribute(a,readable=True) else bads).append(a) for a in attributes]
                         if not goods:
                             continue
                         if goods: 
-                            [(lost if v else ok).append(a) for k,v in api.check_attributes_errors(goods,hours=1,lazy=True).items()]
-                        print '%d attributes on time'%len(ok)
+                            [(lost if v else ok).append(a) for k,v in list(api.check_attributes_errors(goods,hours=1,lazy=True).items())]
+                        print(('%d attributes on time'%len(ok)))
                         if restart and lost:
                             for att in lost:
                                 modes = api[att].modes
                                 if not modes: continue
-                                print 'Restarting archiving for %s' % att
+                                print(('Restarting archiving for %s' % att))
                                 if api.start_archiving([att],modes,load=False):
                                     retried.append(att)                  
                             
                         check = {'all':attributes,'ok':ok,'lost':lost,'retried':retried,'unavailable':bads} 
                         results[schema][d] = check
                         results[schema][d]['rate'] = (float(len(ok))/len(attributes)) if goods else 0
-                        print ('\n'.join('%s: %s'%(k.upper(),summarize(v)) for k,v in results[schema][d].items() if v))
-                    except Exception,e:
+                        print(('\n'.join('%s: %s'%(k.upper(),summarize(v)) for k,v in list(results[schema][d].items()) if v)))
+                    except Exception as e:
                         if d in results[schema]: results[schema].pop(d)
                         failed['%s:%s'%(schema,d)] = traceback.format_exc()
-                        print failed['%s:%s'%(schema,d)]                
+                        print((failed['%s:%s'%(schema,d)]))                
         
         return str(results) 
 
@@ -305,7 +305,7 @@ class PyArchivingWatcher(PyTango.Device_4Impl):
 #   argout: DevString   
 #------------------------------------------------------------------
     def GenerateHtml(self, argin):
-        print "In ", self.get_name(), "::GenerateHtml()"
+        print(("In ", self.get_name(), "::GenerateHtml()"))
         #   Add your own code here
         
         return argout
@@ -380,7 +380,7 @@ class PyArchivingWatcherClass(PyTango.PyDeviceClass):
     def __init__(self, name):
         PyTango.PyDeviceClass.__init__(self, name)
         self.set_type(name);
-        print "In PyArchivingWatcherClass  constructor"
+        print("In PyArchivingWatcherClass  constructor")
 
 #==================================================================
 #
@@ -396,7 +396,7 @@ if __name__ == '__main__':
         U.server_init()
         U.server_run()
 
-    except PyTango.DevFailed,e:
-        print '-------> Received a DevFailed exception:',e
-    except Exception,e:
-        print '-------> An unforeseen exception occured....',e
+    except PyTango.DevFailed as e:
+        print(('-------> Received a DevFailed exception:',e))
+    except Exception as e:
+        print(('-------> An unforeseen exception occured....',e))

@@ -3,7 +3,7 @@ from PyQt4 import Qt, QtGui, QtCore
 from taurus.qt.qtgui import container
 from taurus.qt.qtgui.panel import TaurusForm
 from PyTangoArchiving import SnapAPI
-from snaps import *
+from .snaps import *
 
 class snapWidget(QtGui.QWidget):
     def __init__(self,parent=None,container=None):
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     #dupa=menubar.addMenu('&Dupa')
     #dupa.addAction(Qt.QIcon(":/actions/media-record.svg"),"SnapApp",snap)
 
-    contextAttributes=[attr['full_name'] for attr in context.get_attributes().values()]
+    contextAttributes=[attr['full_name'] for attr in list(context.get_attributes().values())]
     taurusForm=TaurusForm(tmw)
     taurusForm.setModel(contextAttributes)
     tmw.setCentralWidget(taurusForm)

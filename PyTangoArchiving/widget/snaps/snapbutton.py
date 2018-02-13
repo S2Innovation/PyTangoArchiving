@@ -31,9 +31,9 @@ from PyQt4 import Qt, QtGui, QtCore
 from taurus.qt.qtgui import container
 from taurus.qt.qtgui.panel import TaurusForm
 from PyTangoArchiving import SnapAPI
-from snaps import *
+from .snaps import *
 import fandango, fandango.qt
-from toolbar import snapWidget
+from .toolbar import snapWidget
 import PyTango
 import time
 
@@ -135,8 +135,8 @@ class SnapButton(QtGui.QPushButton):
                     self.reason = self.getUserInput(self.reason, "Reason")
                     self.description = self.getUserInput(self.description, "Description")
                 self.snapapi.create_context(self.author,self.name,self.reason,self.description,attributes)
-                print "context ok" 
-                self.contextid = self.snapapi.contexts.keys()[len(self.snapapi.contexts.items())-1]
+                print("context ok") 
+                self.contextid = list(self.snapapi.contexts.keys())[len(list(self.snapapi.contexts.items()))-1]
             except Exception:
                 fandango.qt.QExceptionMessage()
                 return

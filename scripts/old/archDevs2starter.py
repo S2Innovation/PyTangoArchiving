@@ -30,7 +30,7 @@ def add2starter(host,server,instance,level,export=False):
 	
 	di = db.get_server_info('/'.join([server,instance]))
 	di.host,di.controlled,di.startup_level = host,1,level
-	print 'Setting ','/'.join([server,instance]),' with host=',di.host,'; controlled=',di.controlled,'; startup_level=',di.startup_level
+	print(('Setting ','/'.join([server,instance]),' with host=',di.host,'; controlled=',di.controlled,'; startup_level=',di.startup_level))
 	db.put_server_info(di)
 	
 host = 'palantir01'

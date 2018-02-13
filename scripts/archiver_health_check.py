@@ -12,7 +12,7 @@ STOP_WAIT = 30.
 last_restart = 0
 
 def trace(msg):
-  print('%s: %s' % (time.ctime(),msg))
+  print(('%s: %s' % (time.ctime(),msg)))
 
 def restart_server(ss,api='hdb',wait=WAIT_TIME):
   if fun.isString(api): api = pta.api('hdb')
@@ -22,7 +22,7 @@ def restart_server(ss,api='hdb',wait=WAIT_TIME):
   api.servers.start_servers(ss,wait=0.1)
   last_restart = time.time()
   if wait: 
-    print '\tWaiting %s seconds' %wait
+    print(('\tWaiting %s seconds' %wait))
     time.sleep(wait)
   return ss
     
@@ -50,12 +50,12 @@ def get_deactivated_attributes(api='hdb',updates=None,period=6*30*24*3600):
   if fun.isString(api): api = pta.api(api)                                                                    
   if updates is None: updates = get_table_updates(api)                                                        
   now = fun.time.time()                                                                                       
-  return sorted(a for a,t in updates.items() if (now-period)<t<(now-24*3600) and fun.check_attribute(a))  
+  return sorted(a for a,t in list(updates.items()) if (now-period)<t<(now-24*3600) and fun.check_attribute(a))  
   
 def get_idle_servers(api='hdb'):
   idle = dict()
   if fun.isString(api): api = pta.api(api)
-  for s,t in api.servers.items():
+  for s,t in list(api.servers.items()):
     if 'archiver' not in s: continue
     for d in t.get_device_list():
       if not fun.check_device(d):
@@ -88,8 +88,8 @@ def get_all_config_attrs(schema,csvfolder=""):
   csv_ats = dict()
   for f in configs:
     try:
-      print('loading %s.%s'%(f,schema))
-      for k,v in pta.ParseCSV(f,schema).items():
+      print(('loading %s.%s'%(f,schema)))
+      for k,v in list(pta.ParseCSV(f,schema).items()):
         csv_atts[k] = v[schema]
     except:
       traceback.print_exc()
@@ -103,9 +103,9 @@ def check_config_files(schema,restart=False,save='',email=''):
     missing = [a for a in csv_ats if a not in active]
     missread = [a for a in missing if fun.check_attribute(a)]
     msg = '%d CSV(%s) attributes missing in %s (%d readable)'%(len(missing),schema,fun.tango.get_tango_host(),len(missread))
-    print msg
+    print(msg)
     txt = '\n'.join(sorted(missread))
-    print txt
+    print(txt)
     try:
         if save:
             trace('Saving results in %s'%save)
@@ -114,7 +114,7 @@ def check_config_files(schema,restart=False,save='',email=''):
         if email and missing:
             fun.linos.sendmail(msg,txt,email) 
     except:
-        print traceback.format_exc()
+        print((traceback.format_exc()))
     return missread
         
 def minimal_check(schema,interval=3*3600,exclude=".*(wavename|waveid)$",csvs=""):
@@ -128,18 +128,18 @@ def minimal_check(schema,interval=3*3600,exclude=".*(wavename|waveid)$",csvs="")
     r.active = db.get_attribute_names(active=True)
     r.shouldbe = get_all_config_attrs(schema,csvs) if csvs else r.active
     r.shouldbe = [a for a in r.shouldbe if not re.match(exclude,a.lower())]
-    print('%d attributes are active'%len(r.active))
-    print('%d attributes should be active'%len(r.shouldbe))
+    print(('%d attributes are active'%len(r.active)))
+    print(('%d attributes should be active'%len(r.shouldbe)))
     r.missing = [a for a in r.shouldbe if a not in r.ids]
     r.polizon = [a for a in r.active if a not in r.shouldbe]
-    print('%d attributes are archived but not configured'%len(r.polizon))
+    print(('%d attributes are archived but not configured'%len(r.polizon)))
     r.updates = db.get_table_updates()
     r.notupdated = [a for a in r.active if  r.updates[db.get_table_name(r.ids[a])]<time.time()-interval]
-    print('%d active attributes are not updated'%len(r.notupdated))
-    print('%d shouldbe attributes are missing'%len(r.missing))    
+    print(('%d active attributes are not updated'%len(r.notupdated)))
+    print(('%d shouldbe attributes are missing'%len(r.missing)))    
     r.lost = [a for a in r.shouldbe if a in r.ids and r.updates[db.get_table_name(r.ids[a])]<time.time()-interval]
-    r.lost = filter(check_attribute,r.lost)
-    print('%d shouldbe attributes are active but lost'%len(r.lost))
+    r.lost = list(filter(check_attribute,r.lost))
+    print(('%d shouldbe attributes are active but lost'%len(r.lost)))
     return r
     
 def check_schema_information(schema,restart=False,save='',email=''):
@@ -182,7 +182,7 @@ def check_schema_information(schema,restart=False,save='',email=''):
       nread = 100
       
   t1read = float(tread)/nread
-  print 't1read: %f'%t1read
+  print(('t1read: %f'%t1read))
     
   #BECAUSE ALL BPMS DEPRECATED ARE STILL DEDICATED
   excluded = [a for a in active if a not in updated and any(e in a for e in exclude)]
@@ -198,8 +198,8 @@ def check_schema_information(schema,restart=False,save='',email=''):
   marked.update(idle)
   
   if excluded: 
-    print 'ignored : %s'%','.join(excluded)
-  print ''
+    print(('ignored : %s'%','.join(excluded)))
+  print('')
   
   txt = ''
   if depr:
@@ -211,9 +211,9 @@ def check_schema_information(schema,restart=False,save='',email=''):
     txt += '\n'.join('\t%s:%s'%(s,' '.join(marked[s])) for s in sorted(marked))
   trace(txt)
   
-  print ''
+  print('')
   result = {'updates':updates,'active':active,'shouldbe':shouldbe,'lost':lost,'marked':marked,'excluded':excluded,'tread':tread,'nread':nread,'t1read':t1read}
-  print 'nread: %s, tread: %s, t1read: %s'%(nread,tread,t1read)
+  print(('nread: %s, tread: %s, t1read: %s'%(nread,tread,t1read)))
   
   try:
     if save:
@@ -223,7 +223,7 @@ def check_schema_information(schema,restart=False,save='',email=''):
     if email and lost>5:
       fun.linos.sendmail(msg,txt,email) 
   except:
-    print traceback.format_exc()
+    print((traceback.format_exc()))
     
   if restart:
     for s in sorted(depr):
@@ -240,7 +240,7 @@ def check_schema_with_queries(schema):
 
   trace('check_schema(%s)'%schema)
   #Check IDLE devices  
-  for s,t in api.servers.items():
+  for s,t in list(api.servers.items()):
     if 'archiver' not in s: continue
     for d in t.get_device_list():
       if not fun.check_device(d):
@@ -252,7 +252,7 @@ def check_schema_with_queries(schema):
     if s in pending or s in done: continue
     #Check current server attributes
     now = time.time()
-    devs = map(str.lower,t.get_device_list())
+    devs = list(map(str.lower,t.get_device_list()))
     attrs = [a for a in api if api[a].archiver.lower() in devs]
     for a in attrs:
       if 'errorcode' in a: continue
@@ -285,11 +285,11 @@ def check_schema_with_queries(schema):
   return done    
     
 def main():
-  print 'Usage: archiver_health_check.py hdb tdb restart email=dadada@cells.es'
+  print('Usage: archiver_health_check.py hdb tdb restart email=dadada@cells.es')
   import platform
   host = platform.node()
   folder = '/intranet01mounts/controls/intranet/archiving'
-  args = map(str.lower,sys.argv[1:])# or ('hdb','tdb'))
+  args = list(map(str.lower,sys.argv[1:]))# or ('hdb','tdb'))
   restart = any('restart' in s and 'false' not in s.lower() for s in args)
   email = ([s.split('=')[-1] for s in args if 'email=' in s] or [''])[0]
   schemas = [s for s in args if 'restart' not in s and '=' not in s]

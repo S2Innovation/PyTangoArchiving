@@ -38,7 +38,7 @@ from PyTangoArchiving.reader import Reader,ReaderProcess
 ## WARNING: AVOID TO IMPORT TAURUS OR QT OUTSIDE ANY METHOD OR CLASS, BE GREEN!
 #from taurus.qt.qtgui.plot import TaurusTrend
 
-from history import show_history
+from .history import show_history
 from fandango.objects import BoundDecorator, Cached
 from fandango.debug import Timed
 from fandango.dicts import defaultdict
@@ -61,8 +61,8 @@ try:
     elif any(fandango.matchCl(p,platform.node()) for p in prop):
         USE_MULTIPROCESS=True
 except:
-    print traceback.format_exc()
-print 'Multiprocess:%s'%USE_MULTIPROCESS
+    print((traceback.format_exc()))
+print(('Multiprocess:%s'%USE_MULTIPROCESS))
 
 #################################################################################################
 # Methods for enabling archiving values in TauTrends
@@ -121,7 +121,7 @@ class DatesWidget(Qt.QWidget): #Qt.QDialog): #QGroupBox):
         add Apply = Reload+Pause+ShowArchivingDialog
     """
     def __init__(self,trend,parent=None,layout=Qt.QVBoxLayout):
-      print('DatesWidget(%s)'%trend)
+      print(('DatesWidget(%s)'%trend))
       #parent = parent or trend.legend()
       Qt.QWidget.__init__(self,parent or trend)
       #trend.showLegend(True)
@@ -187,7 +187,7 @@ class ArchivingTrend(TaurusTrend):
   
     def __init__(self, parent = None, designMode = False):
       actions = [a[1] for a in MenuActionAppender.ACTIONS]
-      print '>'*80+'\n'+str(MenuActionAppender.ACTIONS)
+      print(('>'*80+'\n'+str(MenuActionAppender.ACTIONS)))
       TaurusTrend.__init__(self,parent,designMode)
       self.resetDefaultCurvesTitle()
       self.setXDynScale(True)
@@ -343,7 +343,7 @@ class ArchivingTrend(TaurusTrend):
         else:
             start = str(ui.xEditStart.text())
         
-        print('applyNewDates(%s,%s)'%(start,end))
+        print(('applyNewDates(%s,%s)'%(start,end)))
         try: t0 = str2time(start)
         except: t0 = None
         try: t1 = str2time(end)
@@ -360,9 +360,9 @@ class ArchivingTrend(TaurusTrend):
           if v == Qt.QMessageBox.Cancel:
             return
         if t0 is not None:
-          print('applyNewDates(%s,%s)'%(fandango.time2str(t0),fandango.time2str(t1)))
+          print(('applyNewDates(%s,%s)'%(fandango.time2str(t0),fandango.time2str(t1))))
           self.setAxisScale(Qwt5.QwtPlot.xBottom, t0, t1)
-          hosts = map(fandango.get_tango_host,self.getModel())
+          hosts = list(map(fandango.get_tango_host,self.getModel()))
           for m in fandango.toList(self.getModel()):
             self.getArchivedTrendLogger().checkBuffers()
       except:
@@ -436,13 +436,13 @@ class ArchivingTrend(TaurusTrend):
         pickedIndex=None
         self.curves_lock.acquire()
         try:
-            if targetCurveNames is None: targetCurveNames = self.curves.iterkeys()
+            if targetCurveNames is None: targetCurveNames = iter(list(self.curves.keys()))
             for name in targetCurveNames:
                 curve = self.curves.get(name, None)
                 if curve is None: self.error("Curve '%s' not found"%name)
                 if not curve.isVisible(): continue
                 data=curve.data()
-                for i in xrange(data.size()):
+                for i in range(data.size()):
                     point=Qt.QPoint(self.transform(curve.xAxis(),data.x(i)) , self.transform(curve.yAxis(),data.y(i)))
                     if scopeRect.contains(point):
                         dist=(pos-point).manhattanLength()
@@ -469,7 +469,7 @@ class ArchivingTrend(TaurusTrend):
             from datetime import datetime
             ax = pickedAxes[1]
             yformat = self.getAxisLabelFormat(ax) or "%.5g"
-            print yformat
+            print(yformat)
             s = "'%s'[%i]:\n\t (t=%s, y="+yformat+")"
             if self.getXIsTime():
                 data = (pickedCurveTitle,pickedIndex,datetime.fromtimestamp(picked.x()).ctime(),picked.y())
@@ -477,7 +477,7 @@ class ArchivingTrend(TaurusTrend):
                 data = (pickedCurveTitle,pickedIndex,picked.x(),picked.y())
             try:
               infotxt = s%data
-              print infotxt
+              print(infotxt)
             except:
               traceback.print_exc()
               infotxt = "'%s'[%i]:\n\t (t=%s, y=%.5g)"%data
@@ -569,7 +569,7 @@ class ArchivedTrendLogger(SingletonMap):
           multiprocess=USE_MULTIPROCESS,schema='',show_dialog=False,
           filters=['*','!DEBUG'],force_period=10000):
         #trend widget,attribute,start_date,stop_date,use_db,db_config,tango_host,logger_obj,multiprocess,schema=''):
-        print('>'*80)
+        print(('>'*80))
         
         from PyTangoArchiving.reader import Reader,ReaderProcess
         self.tango_host = tango_host
@@ -584,7 +584,7 @@ class ArchivedTrendLogger(SingletonMap):
         self.MAX_QUERY_LENGTH = 3600*24*10       
         
         self.schema = schema or (use_db and '*') or 'hdb'
-        print('In ArchivedTrendLogger.setup(%s,%s)'%(trend,self.schema))
+        print(('In ArchivedTrendLogger.setup(%s,%s)'%(trend,self.schema)))
         self.filters = filters
         self._dialog = None
         self.show_dialog(show_dialog) #The dialog is initialized here
@@ -680,10 +680,10 @@ class ArchivedTrendLogger(SingletonMap):
             self.checkBuffers()
 
     def checkBuffers(self,*args):
-        self.warning('CheckBuffers(%s)'%str(self.trend.trendSets.keys()))
+        self.warning('CheckBuffers(%s)'%str(list(self.trend.trendSets.keys())))
         self.trend.doReplot()
         self.show_dialog(not self.dialog()._checked)
-        for n,ts in self.trend.trendSets.iteritems():
+        for n,ts in list(self.trend.trendSets.items()):
             try:
                 model = ts.getModel()
                 if model in self.last_args: self.last_args[model][-1] = 0
@@ -696,14 +696,14 @@ class ArchivedTrendLogger(SingletonMap):
         self.warning('ArchivedTrendLogger.clearBuffers(%s)'%str(args))
         self.last_args = {}
         self.reader.reset()
-        for rd in self.reader.configs.values():
+        for rd in list(self.reader.configs.values()):
           try:
             rd.reset()
             rd.cache.clear()
             rd.last_dates.clear()
           except:
             self.debug('unable to clear %s buffers'%rd)
-        for n,ts in self.trend.trendSets.iteritems():
+        for n,ts in list(self.trend.trendSets.items()):
             ts.clearTrends(replot=True)
             #self._xBuffer.moveLeft(self._xBuffer.maxSize())
             #self._yBuffer.moveLeft(self._yBuffer.maxSize())
@@ -798,7 +798,7 @@ def get_history_buffer_from_model(trend_set,model):
             history = [ h for h in history_ if lasttime<time2epoch(h.time) ]
             self.info(', %d values, %d are new'%(len(history_),len(history)))
             self._history=(self._history+history)[int(-total):]
-    except Exception,e: 
+    except Exception as e: 
         self.debug('Unexpected exception in TauTrendSet.handleEvent: '+str(e))
         self.traceback()
         #self._history = []
@@ -866,8 +866,8 @@ def parseTrendModel(model):
         try: model = model.getFullName()
         except: 
             try: model = model.getModelName()
-            except Exception,e:
-                print e+'\n'+'getArchivedTrendValues():model(%s).getModelName() failed\, using str(model)'%model
+            except Exception as e:
+                print((e+'\n'+'getArchivedTrendValues():model(%s).getModelName() failed\, using str(model)'%model))
                 model = str(model)
     if '{' not in model: #Excluding "eval-like" models
         params = utils.parse_tango_model(model)
@@ -890,8 +890,8 @@ def getTrendGaps(trend,trend_set,bounds=None):
     if bounds is not None and any(bounds): tbounds = bounds[0] or tbounds[0], bounds[1] or tbounds[1]
     
     if tbounds[1] < tbounds[0]:
-        print('#'*80)
-        print('System date seems wrong!!!: %s'%fandango.time2str(tbounds[1]))
+        print(('#'*80))
+        print(('System date seems wrong!!!: %s'%fandango.time2str(tbounds[1])))
     
     bounds = min(tbounds[0],now),min(tbounds[1],now) #Ignoring the "future" part of the scale
     if not bounds[1]-bounds[0]: return bounds[0],bounds[1],ZONES.BEGIN,0.
@@ -932,7 +932,7 @@ def updateTrendBuffers(self,data,logger=None):
     It should also allow to patch non correlative inserts of archived data 
     (inserting instead of extendLeft)
     """
-    print('-'*80)
+    print(('-'*80))
     try:
         #self.curves_lock.acquire()
         import numpy,datetime,PyTangoArchiving.utils as utils
@@ -972,7 +972,7 @@ def updateTrendBuffers(self,data,logger=None):
                             # Iterating will avoid getting stuck in errors
                             try:
                                 y[i] = v[1]
-                            except Exception,e:
+                            except Exception as e:
                                 logmsg(e)
                                 
                 overlap = ((len(t) and numpy.max(t) or 0) > 
@@ -1027,7 +1027,7 @@ def updateTrendBuffers(self,data,logger=None):
                         
                 #logger.warning('new data length: %s, (%s,%s), (%s,%s)' 
                                #% (len(t), t[0], t[-1], y[0], y[-1]))
-            except Exception,e:
+            except Exception as e:
                 import traceback #Import is needed!
                 logger.warning('\tUnable to convert buffers[%d]! %s: %s'
                         %(ntrends,data and data[0],traceback.format_exc()))
@@ -1041,12 +1041,12 @@ def updateTrendBuffers(self,data,logger=None):
             emitHistoryChanged(self)
             return len(t)
             
-    except Exception,e:
+    except Exception as e:
         import traceback
         logger.warning('updateBuffer failed: %s'%(traceback.format_exc()))
         return []
     finally:
-        print('-'*80)
+        print(('-'*80))
         #self.curves_lock.release()
         pass
         
@@ -1056,7 +1056,7 @@ def replaceQtConnection(qobj,signal,callback):
     import functools
     for i,t in enumerate(QT_CONNECTIONS[signal][:]):
         if t[0]==qobj:
-            print 'disconnecting(%s,%s,%s)'%(qobj,signal,t[1])
+            print(('disconnecting(%s,%s,%s)'%(qobj,signal,t[1])))
             qobj.disconnect(qobj,Qt.SIGNAL(signal),t[1])
             #qobj.disconnect(qobj,Qt.SIGNAL(signal),0,0)
             QT_CONNECTIONS[signal].remove(t)
@@ -1338,8 +1338,8 @@ def get_archiving_trend(models=None,length=12*3600,show=False,n_trends=1):
           tt1.setModel(models)
           tt1.setWindowTitle(str(models))
     except:
-        print 'Exception in set_pressure_trend(%s)'%tt
-        print traceback.format_exc()
+        print(('Exception in set_pressure_trend(%s)'%tt))
+        print((traceback.format_exc()))
     if show and n_trends>1: qw.show()
     return qw if n_trends>1 else tt1
         

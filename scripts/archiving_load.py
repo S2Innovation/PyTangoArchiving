@@ -15,7 +15,7 @@ for filename,schema in fandango.product(filenames,schemas):
       csv = pta.files.ParseCSV(filename,schema)
       api = pta.api(schema)
       archived = api.get_archived_attributes()
-      print '%s contains %d attributes, %d should be added to archiving'%(filename,len(csv),len([a for a in csv if a not in archived and pta.utils.check_attribute(a) is not None]))
+      print(('%s contains %d attributes, %d should be added to archiving'%(filename,len(csv),len([a for a in csv if a not in archived and pta.utils.check_attribute(a) is not None]))))
 
   if '-dedicate' in str(params):
       pta.files.DedicateArchiversFromConfiguration(filename, schema, launch=True, restart=True)

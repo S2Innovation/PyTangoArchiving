@@ -93,12 +93,12 @@ class PyExtractor(PyTango.Device_4Impl):
         #attr.set_value(1.0)
         aname,values = attr.get_name(),[]
         attribute = self.tag2attr(aname)
-        print time.ctime()+'In read_dyn_attr(%s)'%aname
+        print((time.ctime()+'In read_dyn_attr(%s)'%aname))
 
         try:
             req,atformat,attype,data = self.AttrData[attribute]
-        except Exception,e:
-            print('Unable to read %s: key = %s ; cache = %s' % (attr,attribute,self.AttrData.keys()))
+        except Exception as e:
+            print(('Unable to read %s: key = %s ; cache = %s' % (attr,attribute,list(self.AttrData.keys()))))
             traceback.print_exc()
             raise e
 
@@ -110,30 +110,30 @@ class PyExtractor(PyTango.Device_4Impl):
             if atformat is PyTango.SpectrumAttr:
                 values = [conv(v[1] or 0.) for v in data]
             else:
-                values = [map(conv,v[1]) for v in data]
-            if values: print time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])
-            else: print '\tno values'
+                values = [list(map(conv,v[1])) for v in data]
+            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+            else: print('\tno values')
             attr.set_value(values,len(values))
             
         elif aname.endswith('_w'): 
             if atformat is PyTango.SpectrumAttr:
                 values = [conv(v[2] or 0.) for v in data]
             else:
-                values = [map(conv,v[2]) for v in data]
-            if values: print time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])
-            else: print '\tno values'
+                values = [list(map(conv,v[2])) for v in data]
+            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+            else: print('\tno values')
             attr.set_value(values,len(values))
             
         elif aname.endswith('_t'): 
             values = [float(v[0] or 0.) for v in data]
-            if values: print time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])
-            else: print '\tno values'
+            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+            else: print('\tno values')
             attr.set_value(values,len(values))
             
         elif aname.endswith('_d'): 
             values = [fn.time2str(float(v[0] or 0.)) for v in data]
-            if values: print time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])
-            else: print '\tno values'
+            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+            else: print('\tno values')
             attr.set_value(values,len(values))            
             
         else:
@@ -144,15 +144,15 @@ class PyExtractor(PyTango.Device_4Impl):
                 values = [(d[0],conv(d[1])) for d in data]
             else:
               if attype is PyTango.DevString:
-                values = [[fn.time2str(d[0])]+map(str,d[1]) for d in data]
+                values = [[fn.time2str(d[0])]+list(map(str,d[1])) for d in data]
               else:
-                values = [[d[0]]+map(conv,d[1]) for d in data]
+                values = [[d[0]]+list(map(conv,d[1])) for d in data]
               
-            if values: print time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])
-            else: print '\tno values'
+            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+            else: print('\tno values')
             attr.set_value(values,len(values))
             
-        print '\treturned %d values'%len(values)
+        print(('\treturned %d values'%len(values)))
         
     def is_dyn_attr_allowed(self,attr,req_type=None):
         return True #self.IsDataReady(attr.name)
@@ -160,9 +160,9 @@ class PyExtractor(PyTango.Device_4Impl):
     def reader_hook(self,attribute,values):
         """This method will be executed by the ReaderProcess to process the queried data.""" 
         try:
-            print('>'*80)
-            print(time.ctime()+' In reader_hook(%s,[%d])'
-                  %(attribute,len(values)))
+            print(('>'*80))
+            print((time.ctime()+' In reader_hook(%s,[%d])'
+                  %(attribute,len(values))))
             
             MAXDIM = 1024*1024*1024
             #First create the attributes
@@ -202,9 +202,9 @@ class PyExtractor(PyTango.Device_4Impl):
             t = fn.now()
             self.RemoveCachedAttribute(attribute)
             self.AttrData[attribute] = (t,atformat,attype,values)
-            print('Done: %s,%s,%s,%s,%d'%(attribute,t,atformat,attype,len(values)))
+            print(('Done: %s,%s,%s,%s,%d'%(attribute,t,atformat,attype,len(values))))
         except:
-            print(traceback.format_exc())
+            print((traceback.format_exc()))
     
 #------------------------------------------------------------------
 #    Device constructor
@@ -218,18 +218,18 @@ class PyExtractor(PyTango.Device_4Impl):
 #    Device destructor
 #------------------------------------------------------------------
     def delete_device(self):
-        print time.ctime()+"[Device delete_device method] for device",self.get_name()
+        print((time.ctime()+"[Device delete_device method] for device",self.get_name()))
         self.reader.stop()
         #del self.reader
-        print 'Waiting 10 seconds'
+        print('Waiting 10 seconds')
         time.sleep(10.)
-        print 'Finished'
+        print('Finished')
 
 #------------------------------------------------------------------
 #    Device initialization
 #------------------------------------------------------------------
     def init_device(self):
-        print time.ctime()+"In ", self.get_name(), "::init_device()"
+        print((time.ctime()+"In ", self.get_name(), "::init_device()"))
         self.set_state(PyTango.DevState.ON)
         self.get_device_properties(self.get_device_class())
         if not self.reader: self.reader = PyTangoArchiving.reader.ReaderProcess(self.DbSchema)
@@ -239,8 +239,8 @@ class PyExtractor(PyTango.Device_4Impl):
 #    Always excuted hook method
 #------------------------------------------------------------------
     def always_executed_hook(self):
-        msg = 'Attributes in cache:\n\t%s\n'%','.join(self.AttrData.keys())
-        print(time.ctime()+"In "+ self.get_name()+ "::always_executed_hook()"+'\n'+msg)
+        msg = 'Attributes in cache:\n\t%s\n'%','.join(list(self.AttrData.keys()))
+        print((time.ctime()+"In "+ self.get_name()+ "::always_executed_hook()"+'\n'+msg))
         status = 'The device is in %s state\n\n'%self.get_state()
         status += msg
         self.set_status(status)
@@ -277,7 +277,7 @@ class PyExtractor(PyTango.Device_4Impl):
         
         Data returned will be (rows,[t0,v0,t1,v1,t2,v2,...])
         """
-        print time.ctime()+"In ", self.get_name(), "::GetAttDataBetweenDates(%s)"%argin
+        print((time.ctime()+"In ", self.get_name(), "::GetAttDataBetweenDates(%s)"%argin))
         #    Add your own code here
         size = 0
         aname = argin[0]
@@ -292,7 +292,7 @@ class PyExtractor(PyTango.Device_4Impl):
         argout = [fn.shape(attrs),[a for a in attrs]]
         
         if not synch:
-          print '\t%s'%argout
+          print(('\t%s'%argout))
           return argout
       
         else:
@@ -309,60 +309,60 @@ class PyExtractor(PyTango.Device_4Impl):
         return [n+'/'+a+s for s in ('','_r','_t')] 
 
     def RemoveCachedAttribute(self, argin):
-        print time.ctime()+"In ", self.get_name(), "::RemoveCachedAttribute(%s)"%argin
+        print((time.ctime()+"In ", self.get_name(), "::RemoveCachedAttribute(%s)"%argin))
         #    Add your own code here
         argin = self.tag2attr(argin)
         if argin in self.AttrData:
             data = self.AttrData.pop(argin)
             del data
         else:
-            print('\tAttribute %s not in AttrData!!!!'%argin)
+            print(('\tAttribute %s not in AttrData!!!!'%argin))
         if False:
             #All this part disabled as it doesn't work well in PyTango 7.2.2
             try:
                 attrlist = self.get_device_attr().get_attribute_list()
                 attrlist = [a.get_name().lower() for a in attrlist]
-                print 'Attributelist: %s'%[str(a) for a in attrlist]
+                print(('Attributelist: %s'%[str(a) for a in attrlist]))
             except:
-                print traceback.format_exc()
+                print((traceback.format_exc()))
             aname = argin.replace('/','__').lower()
             for s in ('','_r','_t',''):#,'_w'):
                 try:
                     if aname in attrlist:
                         self.remove_attribute(aname+s)
                     else:
-                        print('%s attribute does not exist!'%aname)
-                except Exception,e: 
-                    print('\tremove_attribute(%s): %s'%(aname+s,e))
+                        print(('%s attribute does not exist!'%aname))
+                except Exception as e: 
+                    print(('\tremove_attribute(%s): %s'%(aname+s,e)))
         return
 
     def RemoveCachedAttributes(self):
-        print "In ", self.get_name(), "::RemoveCachedAttributes()"
+        print(("In ", self.get_name(), "::RemoveCachedAttributes()"))
         #    Add your own code here
-        remove = [a for a,v in self.AttrData.items() if v[0]<fn.now()-self.ExpireTime]
-        for a in self.AttrData.keys()[:]:
+        remove = [a for a,v in list(self.AttrData.items()) if v[0]<fn.now()-self.ExpireTime]
+        for a in list(self.AttrData.keys())[:]:
             self.RemoveCachedAttribute(a)
 
     def IsArchived(self, argin):
-        print "In ", self.get_name(), "::IsArchived()"
+        print(("In ", self.get_name(), "::IsArchived()"))
         #    Add your own code here
         return self.reader.is_attribute_archived(argin)
 
     def IsDataReady(self, argin):
-        print "In ", self.get_name(), "::IsDataReady(%s)"%argin
+        print(("In ", self.get_name(), "::IsDataReady(%s)"%argin))
         #    Add your own code here
         aname = self.tag2attr(argin)
         argout = aname in self.AttrData
-        print '\tIsDataReady(%s == %s): %s'%(argin,aname,argout)
+        print(('\tIsDataReady(%s == %s): %s'%(argin,aname,argout)))
         return argout
 
     def GetCurrentArchivedAtt(self):
-        print "In ", self.get_name(), "::GetCurrentArchivedAtt()"
+        print(("In ", self.get_name(), "::GetCurrentArchivedAtt()"))
         #    Add your own code here
         return self.reader.get_attributes(active=True)
       
     def GetCurrentQueries(self):
-        print("In "+self.get_name()+"::GetCurrentQueries()")
+        print(("In "+self.get_name()+"::GetCurrentQueries()"))
         
         #self.get_device_properties()
         #if not self.is_command_polled('state'):
@@ -374,12 +374,12 @@ class PyExtractor(PyTango.Device_4Impl):
             a,t = s[0],max((float(s[-1]),60))
             if a not in self.AttrData or self.AttrData[a][0]<(fn.now()-t):
               if a in self.AttrData: 
-                print('%s data is %s seconds old'%(a,fn.now()-self.AttrData[a][0]))
+                print(('%s data is %s seconds old'%(a,fn.now()-self.AttrData[a][0])))
               pending.append(s[:3])
               
           if pending: 
             self.set_state(PyTango.DevState.RUNNING)
-            print('Executing %d scheduled queries:\n%s'%(len(pending),'\n'.join(map(str,pending))))
+            print(('Executing %d scheduled queries:\n%s'%(len(pending),'\n'.join(map(str,pending)))))
             for p in pending:
               self.GetAttDataBetweenDates(p)
           else: 
@@ -388,7 +388,7 @@ class PyExtractor(PyTango.Device_4Impl):
         except:
           self.set_state(PyTango.DevState.FAULT)
           self.set_status(traceback.format_exc())
-          print(self.get_status())
+          print((self.get_status()))
         return self.PeriodicQueries
       
     def AddPeriodicQuery(self,argin):
@@ -491,7 +491,7 @@ class PyExtractorClass(PyTango.DeviceClass):
     def __init__(self, name):
         PyTango.DeviceClass.__init__(self, name)
         self.set_type(name);
-        print "In PyExtractorClass  constructor"
+        print("In PyExtractorClass  constructor")
 
 #==================================================================
 #
@@ -507,7 +507,7 @@ if __name__ == '__main__':
         U.server_init()
         U.server_run()
 
-    except PyTango.DevFailed,e:
-        print '-------> Received a DevFailed exception:',e
-    except Exception,e:
-        print '-------> An unforeseen exception occured....',e
+    except PyTango.DevFailed as e:
+        print(('-------> Received a DevFailed exception:',e))
+    except Exception as e:
+        print(('-------> An unforeseen exception occured....',e))

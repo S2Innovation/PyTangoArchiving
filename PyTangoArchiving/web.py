@@ -38,7 +38,7 @@ AllColors = ("aliceblue,antiquewhite,aqua,aquamarine,azure,beige,bisque,black,bl
             "springgreen,steelblue,tan,teal,thistle,tomato,transparent,turquoise,violet,wheat,white,"+\
             "whitesmoke,yellow,yellowgreen").split(',')
 
-DEFCOLORS = map(Qt.QColor,[
+DEFCOLORS = list(map(Qt.QColor,[
     'red',
     'blue',
     'grey',
@@ -49,7 +49,7 @@ DEFCOLORS = map(Qt.QColor,[
     'lightgreen',
     'orange',
     'magenta',
-    ])
+    ]))
 
 ###############################################################################
 
@@ -65,7 +65,7 @@ import re
 get_varname = lambda p:re.sub('([-_]|(VAL(UE)?))','',('.' in p and p.split('/')[-1] or p).rsplit('.',1)[0].rsplit('--',1)[0]).replace('..','')
 
 def get_plotable_values(attr,begin=0,end=0,decimate=True):
-    print('Loading data for %s ...'%str(attr))
+    print(('Loading data for %s ...'%str(attr)))
     if '.pck' in attr:
         #Reading a pickle file
         vals = pickle.load(open(attr))
@@ -87,12 +87,12 @@ def get_plotable_values(attr,begin=0,end=0,decimate=True):
     
     if begin:
         try:
-            i = (i for i,t in enumerate(vals) if t[0]>=begin).next()
+            i = next((i for i,t in enumerate(vals) if t[0]>=begin))
             vals = vals[i:]
         except: pass
     if end:
         try:
-            i = (i for i,t in enumerate(vals) if t[0]>=end).next()
+            i = next((i for i,t in enumerate(vals) if t[0]>=end))
             vals = vals[:i]
         except: pass
     
@@ -116,7 +116,7 @@ JS_INCLUDES = """
 def jqplot(title,vals,y2vals=None,xvals=None):
     #USING jqPlot instead of Qt
     ats = sorted(vals.keys())
-    print 'JQPlot(%s,%s)'%(len(ats),','.join(ats))
+    print(('JQPlot(%s,%s)'%(len(ats),','.join(ats))))
     js = JS_PATH
     includes = JS_INCLUDES
     jqplot = """
@@ -190,7 +190,7 @@ def jqplot(title,vals,y2vals=None,xvals=None):
         ])
     #data = """[[[1, 2],[3,5.12],[5,13.1],[7,33.6],[9,85.9],[11,219.9]]]"""
     max_size = int(float(MAX_DATA_SIZE)/len(vals))
-    for k,v in vals.items():
+    for k,v in list(vals.items()):
         if len(v)>max_size:
             raise Exception('a warning must be added to notify that value are filtered or decimated')
             'the filter_array window should depend of times requested and max_size'
@@ -202,13 +202,13 @@ def jqplot(title,vals,y2vals=None,xvals=None):
 
 if __name__=='__main__':
     args = sys.argv[1:]
-    filename = (a for a in args if 'html' in a).next()
+    filename = next((a for a in args if 'html' in a))
     title = ([a.split('=',1)[-1] for a in args if a.startswith('--title=')] or ['Data Report'])[0]
     model = [a for a in args if not a.startswith('--') and not a.endswith('.html')]
     vals = dict((get_varname(m) or m,get_plotable_values(m,decimate=False)) for m in model)
-    for k in vals.keys():
+    for k in list(vals.keys()):
         if not vals[k]: vals.pop(k)
-    print('Writing %s report ...'%filename)
+    print(('Writing %s report ...'%filename))
     f = open(filename,'w')
     f.write('<html><head><title>%s</title>%s</head>'%(title,JS_INCLUDES))
     f.write('<body>%s</body></html>'%jqplot(title,vals))

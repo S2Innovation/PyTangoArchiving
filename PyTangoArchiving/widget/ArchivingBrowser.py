@@ -62,7 +62,7 @@ def get_distinct_domains(l):
 def launch(script,args=[]):
     import os
     f = '%s %s &'%(script,' '.join(args))
-    print 'launch(%s)'%f
+    print(('launch(%s)'%f))
     os.system(f)
 
 from fandango.qt import QGridTable, QDictToolBar
@@ -120,14 +120,14 @@ class AttributesPanel(PARENT_KLASS):
             traceback.print_exc()
             
     def __del__(self):
-        print 'AttributesPanel.__del__'
+        print('AttributesPanel.__del__')
         QGridTable.__del__(self)
             
     def mousePressEvent(self, event):
         point = event.pos()
         widget = Qt.QApplication.instance().widgetAt(self.mapToGlobal(point))
         if hasattr(widget,'_model'):
-            print('onMouseEvent(%s)'%(getattr(widget,'text',lambda:widget)()))
+            print(('onMouseEvent(%s)'%(getattr(widget,'text',lambda:widget)())))
             self.current_item = widget
             if event.button()==Qt.Qt.RightButton:
                 self.onContextMenu(point)
@@ -186,7 +186,7 @@ class AttributesPanel(PARENT_KLASS):
         for i,tc in enumerate(sorted(values)):
             #print 'setTableRow(%s,%s)'%(i,tc)
             model,device,attribute,alias,archived,ok = tc
-            model,device,attribute,alias = map(str.upper,(model,device,attribute,alias))
+            model,device,attribute,alias = list(map(str.upper,(model,device,attribute,alias)))
             self.vheaders.append(model)
             def ITEM(m,model=''):
                 q = fandango.qt.Draggable(Qt.QLabel)(m)
@@ -238,7 +238,7 @@ class AttributesPanel(PARENT_KLASS):
                     else:
                         tv.setModel(model)
                 except: 
-                    print traceback.format_exc()
+                    print((traceback.format_exc()))
                 self.models.append(tv)
                 #print('...')
             #self.widgetbuffer.extend([qf,self.itemAt(i+self.offset,1),self.itemAt(i+self.offset,2),self.itemAt(i+self.offset,3),self.itemAt(i+self.offset,4)])
@@ -256,8 +256,8 @@ class AttributesPanel(PARENT_KLASS):
             setup(self)
             
         if self.worker:
-            print( '%s.next()' % (self.worker) )
-            self.worker.next()
+            print(( '%s.next()' % (self.worker) ))
+            next(self.worker)
             
         #threading.Event().wait(10.)
         #print 'Out of generateTable()'
@@ -353,14 +353,14 @@ class ArchivingBrowser(Qt.QWidget):
         all_devs = self.all_devices if not archive else self.archdevs
         all_devs = [d for d in all_devs if not any(d.startswith(e) for e in exclude) or any(d.startswith(e) and fun.matchCl(e,devfilter) for e in exclude)]
         if servfilter.strip('.*'):
-            sdevs = map(str.lower,fandango.Astor(servfilter).get_all_devices())
+            sdevs = list(map(str.lower,fandango.Astor(servfilter).get_all_devices()))
             all_devs = [d for d in all_devs if d in sdevs]
         #print('In load_attributes(%s,%s,%s): Searching through %d %s names'
               #%(servfilter,devfilter,attrfilter,len(all_devs),
                 #'server' if servfilter else 'device'))
         if devfilter.strip().strip('.*'):
             devs = [d for d in all_devs if (fandango.searchCl(devfilter,d,extend=True))]
-            print('\tFound %d devs, Checking alias ...'%(len(devs)))
+            print(('\tFound %d devs, Checking alias ...'%(len(devs))))
             alias,alias_devs = [],[]
             if '&' in devfilter:
                 alias = self.all_alias
@@ -368,9 +368,9 @@ class ArchivingBrowser(Qt.QWidget):
                 for df in devfilter.split('|'):
                     alias.extend(self.tango.get_device_alias_list('*%s*'%df.strip()))
             if alias: 
-                print('\t%d alias found'%len(alias))
+                print(('\t%d alias found'%len(alias)))
                 alias_devs.extend(self.alias_devs[a] for a in alias if fun.searchCl(devfilter,a,extend=True))
-                print('\t%d alias_devs found'%len(alias_devs))
+                print(('\t%d alias_devs found'%len(alias_devs)))
                 #if not self.alias_devs:
                     #self.alias_devs =  dict((str(self.tango.get_device_alias(a)).lower(),a) for a in self.all_alias)
                 #devs.extend(d for d,a in self.alias_devs.items() if fandango.searchCl(devfilter,a) and (not servfilter or d in all_devs))
@@ -380,7 +380,7 @@ class ArchivingBrowser(Qt.QWidget):
             
         devs = sorted(set(devs))
         self.matching_devs = devs
-        print('In load_attributes(%s,%s,%s): %d devices found'%(servfilter,devfilter,attrfilter,len(devs)))
+        print(('In load_attributes(%s,%s,%s): %d devices found'%(servfilter,devfilter,attrfilter,len(devs))))
 
         if False and not len(devs) and not archive:
             #Devices do not actually exist, but may exist in archiving ...
@@ -422,7 +422,7 @@ class ArchivingBrowser(Qt.QWidget):
                                 devfilter,attrfilter,len(self.matching_attributes),'\n'.join(sorted(self.matching_attributes.keys())[:30])))
                             return {}
             except:
-                print('load_attributes(%s,%s,%s => %s) failed!'%(servfilter,devfilter,attrfilter,d))
+                print(('load_attributes(%s,%s,%s => %s) failed!'%(servfilter,devfilter,attrfilter,d)))
                 failed_devs.append(d)
                 if attrfilter in ('state','','*','**'):
                     self.matching_attributes[d+'/state'] = (d,d,'state',None) #A None label means device-not-readable
@@ -434,7 +434,7 @@ class ArchivingBrowser(Qt.QWidget):
         if not len(self.matching_attributes):
             Qt.QMessageBox.warning(self, "Warning", "No matching attribute has been found in %s." % ('Archiving DB' if archive else 'Tango DB (try Archiving option)'))
         if failed_devs:
-            print('\t%d failed devs!!!: %s'%(len(failed_devs),failed_devs))
+            print(('\t%d failed devs!!!: %s'%(len(failed_devs),failed_devs)))
             if warn:
                 Qt.QMessageBox.warning(self, "Warning" , 
                     "%d devices were not running:\n"%len(failed_devs) +'\n'.join(failed_devs[:10]+(['...'] if len(failed_devs)>10 else []) ))
@@ -502,7 +502,7 @@ class ArchivingBrowser(Qt.QWidget):
             self.toppan.layout().addWidget(self.header)
         
         if USE_SCROLL:
-            print '*'*30 + ' USE_SCROLL=True '+'*'*30
+            print(('*'*30 + ' USE_SCROLL=True '+'*'*30))
             self._scroll = MyScrollArea(self.toppan)#Qt.QScrollArea(self)
             self._background = AttributesPanel(self._scroll) #At least a panel should be kept (never deleted) in background to not crash the worker!
             self.panel = None
@@ -623,12 +623,12 @@ class ArchivingBrowser(Qt.QWidget):
                   old.deleteLater() #Must be done after creating the new one!!
                 table = [] #model,device,attribute,alias,archived,ok
                 #ATTRIBUTES ARE FILTERED HERE!! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                for k,v in self.load_attributes(*filters).items():
+                for k,v in list(self.load_attributes(*filters).items()):
                     try: 
                         archived = self.reader.is_attribute_archived(k)
-                    except Exception,e: 
-                        print('Archiving not available!:\n %s'
-                              %traceback.format_exc())
+                    except Exception as e: 
+                        print(('Archiving not available!:\n %s'
+                              %traceback.format_exc()))
                         archived = []
                     #print(k,v,archived)
                     table.append((k,v[0],v[2],v[1],archived,v[3] is not None))
@@ -637,7 +637,7 @@ class ArchivingBrowser(Qt.QWidget):
                     self._scroll.setWidget(self.panel)
                     #self.panel.setParent(self._scroll) #IT DOESNT WORK
                     self._scroll.setChildrenPanel(self.panel)
-        except Exception,e:
+        except Exception as e:
             #traceback.print_exc()
             Qt.QMessageBox.warning(self, "Warning" , "There's something wrong in your search (%s), please simplify the string"%traceback.format_exc())
         return
@@ -672,7 +672,7 @@ def main(args=None):
     if args: 
         table.updateSearch(*args)
     if '--range' in opts:
-        print('Setting trend range to %s' % opts['--range'])
+        print(('Setting trend range to %s' % opts['--range']))
         table.trend.applyNewDates(opts['--range'].split(','))
     return tmw
     

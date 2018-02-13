@@ -41,11 +41,11 @@ def showTestDevice(device=None):
 
 def showDeviceInfo(device,parent=None):
     device = device or str(self.current_item._model.rsplit('/',1)[0])
-    info = F.tango.get_device_info(device).items()
+    info = list(F.tango.get_device_info(device).items())
     Qt.QMessageBox.warning(parent, "%s Info"%device , '\n'.join('%s : %s'%i for i in info))
     
 def showArchivingModes(model,parent=None,schemas=('HDB','TDB')):
-    print('onShowArchivingModes(%s)'%model)
+    print(('onShowArchivingModes(%s)'%model))
     #DIALOG MUST BE ALWAYS SHOWN, EVEN FOR NON-ARCHIVED ATTRIBUTES!
     #w = Qt.QWidget() 
     w = Qt.QDialog()
@@ -159,7 +159,7 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
       
   def setSchema(self,schema):
     schema = schema.lower()
-    print('setSchema(%s)'%schema)
+    print(('setSchema(%s)'%schema))
     self.reader = pta.Reader(schema)
     self.schema.setText('<b>%s</b>'%schema.upper())
     
@@ -178,7 +178,7 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
   def setModel(self,model):
     model = self.getReader().get_attribute_alias(model)
     model = re.sub('\[([0-9]+)\]','',model.lower())
-    print('QArchivingMode.setModel(%s@%s)'%(model,self.getSchema()))
+    print(('QArchivingMode.setModel(%s@%s)'%(model,self.getSchema())))
     self.attribute.setText(model)
     Qt.QApplication.instance().setOverrideCursor(Qt.QCursor(Qt.Qt.WaitCursor))
     try:
@@ -194,7 +194,7 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
    
   def setModes(self,modes={},expected={}):
     """ modes is a dictionary like {'MODE_P':[period]} """
-    print(type(self).__name__,'setModes',self.getModel(),modes)
+    print((type(self).__name__,'setModes',self.getModel(),modes))
     if pta.utils.modes_to_string(expected) == pta.utils.modes_to_string(modes):
       self.logger().hide()    
     for i,m in enumerate(('MODE_P','MODE_R','MODE_A')):
@@ -212,7 +212,7 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
       try:
         db = self.reader.get_database()
         attr_id = modes.get('ID')
-        date = db.get_table_updates(db.get_table_name(attr_id)).values()[0]
+        date = list(db.get_table_updates(db.get_table_name(attr_id)).values())[0]
         if date<time.time()-600: date = '<b>%s</b>' % fun.time2str(date)
         else: date = fun.time2str(date)
         dev = modes['archiver']
@@ -271,9 +271,9 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
         return
       modes = self.getModes() or {'MODE_P':[60000]}
       schema = self.getSchema()
-      print('%s: applyModes(%s)'%(fun.time2str(),modes))
+      print(('%s: applyModes(%s)'%(fun.time2str(),modes)))
       msg = 'Modes to be applied:\n'
-      for m,v in modes.items():
+      for m,v in list(modes.items()):
        msg += '\t%s.%s: %s\n'%(schema,m,v)
       qm = Qt.QMessageBox(Qt.QMessageBox.Warning,'Confirmation',msg,Qt.QMessageBox.Ok|Qt.QMessageBox.Cancel)
       r = qm.exec_()
@@ -284,13 +284,13 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
         #self.emit(Qt.SIGNAL('archive'),attr,modes)
         Qt.QApplication.instance().setOverrideCursor(Qt.QCursor(Qt.Qt.WaitCursor))
         thr = threading.Thread(target=self.startArchiving,args=(attr,modes))
-        QLoggerDialog._threads = filter(Thread.is_alive,self.threads())+[thr]
+        QLoggerDialog._threads = list(filter(Thread.is_alive,self.threads()))+[thr]
         thr.start()
       else:
         self.logger().hide()
     except: 
       self.logger().error(traceback.print_exc())
-    print('%s: applyModes(...): running!'%(fun.time2str()))
+    print(('%s: applyModes(...): running!'%(fun.time2str())))
     #Qt.QApplication.instance().restoreOverrideCursor()
     
   def resetModes(self):
@@ -298,7 +298,7 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
     try:
       attr = self.getModel()
       schema = self.getSchema()
-      print('%s: resetModes(%s)'%(fun.time2str(),attr))
+      print(('%s: resetModes(%s)'%(fun.time2str(),attr)))
       qm = Qt.QMessageBox(Qt.QMessageBox.Warning,'Confirmation',
            '%s archiving will be stopped'%attr,
            Qt.QMessageBox.Ok|Qt.QMessageBox.Cancel)
@@ -310,17 +310,17 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
         #self.emit(Qt.SIGNAL('archive'),attr,modes)
         Qt.QApplication.instance().setOverrideCursor(Qt.QCursor(Qt.Qt.WaitCursor))
         thr = threading.Thread(target=self.startArchiving,args=(attr,{}))
-        QLoggerDialog._threads = filter(Thread.is_alive,self.threads())+[thr]
+        QLoggerDialog._threads = list(filter(Thread.is_alive,self.threads()))+[thr]
         thr.start()
       else:
         self.logger().hide()
     except: 
       traceback.print_exc()
-    print('%s: resetModes(...): running!'%(fun.time2str()))
+    print(('%s: resetModes(...): running!'%(fun.time2str())))
     
   def startArchiving(self,attr,modes):
     try:
-      print('%s: startArchiving(%s)'%(fun.time2str(),attr))
+      print(('%s: startArchiving(%s)'%(fun.time2str(),attr)))
       #self.api.load_attribute_modes([attr])
       if modes:
         self.api.start_archiving(attr,modes)
@@ -330,11 +330,11 @@ class QArchivingMode(fqt.Dropable(Qt.QFrame)):
       self.emit(Qt.SIGNAL('update'),news,modes)
     except:
       self.logger().error(traceback.format_exc())
-    print('%s: startArchiving(%s): done!'%(fun.time2str(),attr))
+    print(('%s: startArchiving(%s): done!'%(fun.time2str(),attr)))
     
   @staticmethod
   def _test(schema = None, model = None, multirow = None):
-    print('_test',schema,model,multirow)
+    print(('_test',schema,model,multirow))
     if multirow is None:
       w = QArchivingMode()
     else:
@@ -358,7 +358,7 @@ class QLoggerDialog(fqt.QTextBuffer):
     self.filters = filters
     self.remote = remote
     self.connect(self,Qt.SIGNAL('logging'),self.log)
-    print('QLoggerDialog(%s)'%title)
+    print(('QLoggerDialog(%s)'%title))
     
   def dialog(self):
     return self #self._dialog

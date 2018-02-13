@@ -9,8 +9,8 @@ import PyTangoArchiving as pta
 
 def get_archivers_filters(archiver='archiving/es/*'):
     filters = fn.SortedDict(sorted((k,v['AttributeFilters']) for k,v in 
-                    fn.tango.get_matching_device_properties(
-                    archiver,'AttributeFilters').items()))
+                    list(fn.tango.get_matching_device_properties(
+                    archiver,'AttributeFilters').items())))
     return filters
 
 def get_schema_attributes(schema='*'):
@@ -48,7 +48,7 @@ def match_attributes_and_archivers(attrs=[],archs='archiving/es/*'):
 
     if isSequence(archs): archs = '(%s)'%')|('.join(archs)
     filters = get_archivers_filters(archs)
-    r = devattrs.keys()
+    r = list(devattrs.keys())
     archattrs = {}
     
     for i,k in enumerate(filters):
@@ -59,7 +59,7 @@ def match_attributes_and_archivers(attrs=[],archs='archiving/es/*'):
             m = fn.filtersmart(r,v)
             currattrs = set(fn.join(*[devattrs[d] for d in m]))
             if len(currattrs):
-                print(k,len(currattrs),sorted(set(i.split('/')[-2] for i in m)))
+                print((k,len(currattrs),sorted(set(i.split('/')[-2] for i in m))))
                 archattrs[k] = currattrs
                 print('\n')
             r = [a for a in r if a not in m]
@@ -68,7 +68,7 @@ def match_attributes_and_archivers(attrs=[],archs='archiving/es/*'):
             m = r
             currattrs = fn.join(*[devattrs[d] for d in m])
             if len(attrs):
-                print(k,len(currattrs),sorted(set(i.split('/')[-2] for i in m)))
+                print((k,len(currattrs),sorted(set(i.split('/')[-2] for i in m))))
                 archattrs[k] = currattrs
             
     return archattrs

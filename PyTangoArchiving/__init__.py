@@ -49,33 +49,33 @@ ARCHIVING_CLASSES =     ['HdbArchiver','TdbArchiver','SnapArchiver',
 MAX_SERVERS_FOR_CLASS=5
 MIN_ARCHIVING_PERIOD=10
 
-import utils
-import dbs
-import common
+from . import utils
+from . import dbs
+from . import common
 #import reader ; should be loaded the last
-import archiving
-import files
+from . import archiving
+from . import files
 
-from common import CommonAPI
-from common import getSingletonAPI as getCommonAPI
-from archiving import ArchivingAPI,ArchivedAttribute
-from utils import check_attribute,check_archiving_performance
-from files import GetConfigFiles,LoadArchivingConfiguration,CheckArchivingConfiguration,ParseCSV,StopArchivingConfiguration
+from .common import CommonAPI
+from .common import getSingletonAPI as getCommonAPI
+from .archiving import ArchivingAPI,ArchivedAttribute
+from .utils import check_attribute,check_archiving_performance
+from .files import GetConfigFiles,LoadArchivingConfiguration,CheckArchivingConfiguration,ParseCSV,StopArchivingConfiguration
 
 __all__=['reader','archiving','utils','files','common']
 
 try:
-    import snap
-    from snap import SnapDB,SnapAPI
+    from . import snap
+    from .snap import SnapDB,SnapAPI
     __all__.extend(('snap',))#'SnapDB','SnapAPI'))
 except:
-    print 'Unable to import snap'
+    print('Unable to import snap')
 
 api = ArchivingAPI
 
 #Order matters!, it should be the last import
-import reader
-from reader import Reader,getArchivedTrendValues
+from . import reader
+from .reader import Reader,getArchivedTrendValues
 
 """
 Some interesting queries;

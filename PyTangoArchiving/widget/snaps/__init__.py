@@ -1,1 +1,1 @@
-from snaps import *
+from .snaps import *

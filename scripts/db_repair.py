@@ -40,7 +40,7 @@ def do_repair(user,passwd,condition="engine is null",database="information_schem
     cursor = db_con.cursor()
     cursor.execute(sql)
     rset = cursor.fetchall()
-    print '%d tables match condition'%len(rset)
+    print(('%d tables match condition'%len(rset)))
     now = time.time()
     days = days or 60
     tlimit = fandango.time2str(now-days*24*3600);
@@ -50,24 +50,24 @@ def do_repair(user,passwd,condition="engine is null",database="information_schem
             if fandango.isSequence(item): 
                 item = item[0]
             if force: 
-                raise Exception,'force=True, all tables to be checked'
+                raise Exception('force=True, all tables to be checked')
             elif 'att_' in item: 
                 q = "select count(*) from %s where time between '%s' and '%s' order by time"%(item,tlimit,now)
                 cursor.execute(q)
                 count = cursor.fetchone()[0]
                 q = "select * from %s where time between '%s' and '%s' order by time"%(item,tlimit,now)
-                print q
+                print(q)
                 cursor.execute(q)  # desc limit 1'%item);
                 l = len(cursor.fetchall())
                 if abs(count-l)>5: 
                   raise Exception('%d!=%d'%(count,l))
             else: 
-              raise Exception,'%s is a config table'%item
-        except Exception,e:
-            print e
-            print 'Repairing %s ...' % item
+              raise Exception('%s is a config table'%item)
+        except Exception as e:
+            print(e)
+            print(('Repairing %s ...' % item))
             cursor.execute('repair table %s' % item)
-            print '[OK]\n'
+            print('[OK]\n')
         time.sleep(.001)
     cursor.close()
     db_con.close()
@@ -75,27 +75,27 @@ def do_repair(user,passwd,condition="engine is null",database="information_schem
 def main():
     import getopt
     t0,t1,t2 = sys.argv[1:],''.join(s for s,l,d in __options__ if s),[l for s,l,d in __options__ if l]
-    print t0,t1,t2
+    print((t0,t1,t2))
     opts,args = getopt.getopt(t0,t1,t2)
     opts = dict((k.strip('-'),v) for k,v in opts+[('',args)])
     t0 = time.time()
     if any(o in opts for o in ('h','?','help')):
-        print usage()
+        print((usage()))
         sys.exit()
     else:
         if not opts['']:
-            user = raw_input('Enter user:')
-            passwd = raw_input('Enter password:')
+            user = eval(input('Enter user:'))
+            passwd = eval(input('Enter password:'))
         else:
             user,passwd = opts[''][:2]
         db_host = opts.get('host','localhost')
         os.system('mysqladmin -h %s -u %s -p%s flush-hosts'%(db_host,user,passwd))
         condition = 'engine is null OR table_schema like "hdb%%" OR table_schema like "tdb%%"'
         if 'no-prompt' not in opts:
-            new_condition = raw_input('Query condition (%s):'%condition)
+            new_condition = eval(input('Query condition (%s):'%condition))
             condition = new_condition.strip() or condition
         do_repair(user,passwd,condition,force='force' in opts or 'f' in opts,days=int(opts.get('days',0)),db_host=db_host)
-        print 'database repair finished in %d seconds'%(time.time()-t0)
+        print(('database repair finished in %d seconds'%(time.time()-t0)))
     pass
 
 if (__name__ == '__main__') :

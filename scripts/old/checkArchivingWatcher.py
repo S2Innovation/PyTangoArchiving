@@ -21,4 +21,4 @@ if health != ArchivingHealth['ALL_OK']:
 	report = watcher.read_attribute('FormattedReport').value[0]
 	os.system(' '.join(['echo','"'+report+'"','| mail -s ',subject]+receivers))
 else:
-	print 'Lo archiving va bene ...'
+	print('Lo archiving va bene ...')

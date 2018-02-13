@@ -29,7 +29,7 @@ npartitions = 20
 counter = 0
 
 def inc_months(date,count):
-    y,m,d = map(int,date.split('-'))
+    y,m,d = list(map(int,date.split('-')))
     m = m+count
     r = m%12
     if r:
@@ -45,7 +45,7 @@ head = "ALTER TABLE %s PARTITION BY RANGE(TO_DAYS(data_time)) ("
 line = "PARTITION %s%s VALUES LESS THAN (TO_DAYS('%s'))"
 lines = []
 
-for t,p in tables.items():
+for t,p in list(tables.items()):
     lines.append(head%t)
     for i in range(0,npartitions):
         date = inc_months(start_date,i)
@@ -55,6 +55,6 @@ for t,p in tables.items():
         lines.append(l)
     lines.append(');\n\n')
     
-print('\n'.join(lines))
+print(('\n'.join(lines)))
     
     

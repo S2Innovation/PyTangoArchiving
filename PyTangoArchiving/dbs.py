@@ -36,7 +36,7 @@ import PyTangoArchiving.utils as utils
 try:
     from fandango.db import FriendlyDB
 except:
-    raise Exception,'import FriendlyDB failed, is MySQLdb module installed?'
+    raise Exception('import FriendlyDB failed, is MySQLdb module installed?')
 
 class ArchivingDB(FriendlyDB):
     """ 
@@ -74,7 +74,7 @@ class ArchivingDB(FriendlyDB):
         return 'att_%05d'%ID if ID<10000 else 'att_%06d'%ID
         
     def get_attribute_ID(self,name):
-        return fandango.first(self.get_attributes_IDs(name).values())
+        return fandango.first(list(self.get_attributes_IDs(name).values()))
     
     def get_attributes_IDs(self,name=''):
         q =  "select full_name,ID from adt"+(" where full_name like '%s'"%name if name else '')
@@ -152,7 +152,7 @@ class ArchivingDB(FriendlyDB):
             result = {}
             for row in val:
                 result[row['ID']] = dict((k,row[k]) for k in ('ID','archiver','start_date','stop_date'))
-                result[row['ID']].update((k,[row[j] for j in v]) for k,v in self.AMT_COLUMNS.items() if '_mod' in k and row[k])
+                result[row['ID']].update((k,[row[j] for j in v]) for k,v in list(self.AMT_COLUMNS.items()) if '_mod' in k and row[k])
             return result if len(result)!=1 else result.popitem()[1]
     
     def get_last_attribute_values(self,table,n,check_table=False):
@@ -224,7 +224,7 @@ class ArchivingDB(FriendlyDB):
         existing = self.getTables()
         done = {}
         adt = dict((k,(aid,atype,aformat,awrite)) for k,aid,atype,aformat,awrite in self.get_attribute_descriptions())
-        if attrlist is None: attrlist = adt.keys()
+        if attrlist is None: attrlist = list(adt.keys())
         for a in attrlist:
             aid,atype,aformat,awrite = adt[a]
             table_name = self.get_table_name(aid)
@@ -243,10 +243,10 @@ class ArchivingDB(FriendlyDB):
                 else:
                     query += "`read_value` " + stype + " default NULL, "+"`write_value` " + stype + " default NULL"
                 query += ") ENGINE = MyIsam" #CRITICAL!!!
-                print 'Creating %s: %s'%(a,query)
+                print(('Creating %s: %s'%(a,query)))
                 self.Query(query)
                 done[a]=query
-        return done.keys()
+        return list(done.keys())
     
     def clean_attribute_modes(self,date):
         """
@@ -254,15 +254,15 @@ class ArchivingDB(FriendlyDB):
         """
         try: 
             self.db.Query("DELETE FROM amt WHERE stop_date IS NOT NULL AND stop_date < '%s'"%date)
-        except Exception,e: 
-            print 'ArchivingDB(%s).clean_attribute_modes(%s) failed!: %s'%(self.db_name,date,e)
+        except Exception as e: 
+            print(('ArchivingDB(%s).clean_attribute_modes(%s) failed!: %s'%(self.db_name,date,e)))
             return False
         return True
     
     def get_table_updates(self,name=''):
         if name and not str(name).startswith('att_'):
             n = self.get_table_name(name if isinstance(name,int) else self.get_attribute_ID(name))
-            print '%s => %s'  % (name,n)
+            print(('%s => %s'  % (name,n)))
             name = n
         q = 'select table_name,update_time from information_schema.tables where table_schema like "%s"'%self.db_name
         if name: q+=" and table_name like '%s'"%name

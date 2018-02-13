@@ -41,10 +41,10 @@ try:
 except:
     from PyQt4 import Qt,QtCore,QtGui
 from taurus.qt.qtgui import container
-from snapdialogs import SnapDialog
-from ui.core import *
-from ui.diff import *
-from ui.modify import *
+from .snapdialogs import SnapDialog
+from .ui.core import *
+from .ui.diff import *
+from .ui.modify import *
 
 class diffWidget(QtGui.QWidget):
     def __init__(self,parent=None):
@@ -55,9 +55,9 @@ class diffWidget(QtGui.QWidget):
 def cast_value(TYPE,V):
     try:
         return TYPE(V)
-    except Exception,e:
-        print '%s(%s) Failed!!'%(TYPE,str(V)[:80])
-        print traceback.format_exc()
+    except Exception as e:
+        print(('%s(%s) Failed!!'%(TYPE,str(V)[:80])))
+        print((traceback.format_exc()))
         return 0
     
 def get_as_int(item):
@@ -94,7 +94,7 @@ class ContextEditWidget(QtGui.QWidget):
         self.ui.line_reason.setText(self.ctx.reason)
         self.ui.line_description.setText(self.ctx.description)
         attributes = self.ctx.get_attributes()#get_attributes_data
-        self.ui.attch.updateList([v['full_name'] for v in attributes.values()])
+        self.ui.attch.updateList([v['full_name'] for v in list(attributes.values())])
 
     def onCreatePressed(self):
 
@@ -125,20 +125,20 @@ class ContextEditWidget(QtGui.QWidget):
                 attributes.append(str(self.ui.final_List.item(i).text()))
             self.snapapi.create_context(str(self.ui.line_author.text()),str(self.ui.line_name.text()),str(self.ui.line_reason.text()),str(self.ui.line_description.text()),attributes)
         except Exception:
-            print traceback.format_exc()
+            print((traceback.format_exc()))
             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
                                     "Could not create new context.<br>" + \
                                     "Was not possible to talk with SnapManager DS.<br>" + \
                                     "Please check if DS is running.")
             return
-        self.newID = self.snapapi.contexts.keys()[len(self.snapapi.contexts.items())-1]
-        print('un contexte nou: %d' %self.newID)
+        self.newID = list(self.snapapi.contexts.keys())[len(list(self.snapapi.contexts.items()))-1]
+        print(('un contexte nou: %d' %self.newID))
         self.emit(QtCore.SIGNAL("NewContextCreated(int)"), self.newID)
         self.onCancelPressed()
         Qt.QMessageBox.information(self,"Context","Context created succesfully!")
 
     def modifyContext(self, cid):
-        print 'In modifyContext(%s)'%cid
+        print(('In modifyContext(%s)'%cid))
         try:
             attributes=[]
             for i in range(self.ui.final_List.count()):
@@ -153,7 +153,7 @@ class ContextEditWidget(QtGui.QWidget):
             self.snapapi.modify_context(cid,self.ctx.author,self.ctx.name,
                 self.ctx.reason,self.ctx.description,attributes)
         except Exception:
-            print traceback.format_exc()
+            print((traceback.format_exc()))
             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
                                     "Could not modify context.<br>" + \
                                     "Was not possible to talk with SnapManager DS.<br>" + \
@@ -184,7 +184,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         self._Form=Form
         Form.setWindowTitle(QtGui.QApplication.translate("Form",'!:'+str(os.getenv('TANGO_HOST')).split(':',1)[0]+' Snaps', None, QtGui.QApplication.UnicodeUTF8))
         self.contextComboBox.setToolTip(QtGui.QApplication.translate("Form", "Choose a Context", None, QtGui.QApplication.UnicodeUTF8))
-        print 'connecting signals ...'
+        print('connecting signals ...')
         QtCore.QObject.connect(self.contextComboBox,QtCore.SIGNAL("currentIndexChanged(int)"), self.onContextChanged)
         QtCore.QObject.connect(self.contextComboBox,QtCore.SIGNAL("activated(int)"), self.onContextChanged)
         self.contextComboBox.setMaximumWidth(250)
@@ -201,7 +201,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         self.buttonEditCtx.setIcon(icon_view)
         QtCore.QObject.connect(self.buttonEditCtx,QtCore.SIGNAL("pressed()"), self.onEditPressed)
         self.buttonEditCtx.setToolTip(QtGui.QApplication.translate("Form", "Edit Context", None, QtGui.QApplication.UnicodeUTF8))
-        print 'connected signals ...'
+        print('connected signals ...')
         
         self.filterLabel.setText(QtGui.QApplication.translate("Form", "Filter:", None, QtGui.QApplication.UnicodeUTF8))
         self.filterComboBox.addItem('Name')
@@ -309,7 +309,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
                                     "Could not talk with SnapManager DS.<br>" + \
                                     "Please check if DS is running.")
 
-        ctxs=sorted(contexts.values(), key=lambda s:s.name.lower())
+        ctxs=sorted(list(contexts.values()), key=lambda s:s.name.lower())
         for context in ctxs:
             self.contextComboBox.addItem("%s [%d]" % (context.name, context.ID), Qt.QVariant(context.ID))
         #self.contextComboBox.model().sort(0, Qt.Qt.AscendingOrder)
@@ -333,10 +333,10 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         return get_as_int(self.contextComboBox.itemData(idx))
 
     def onFilterComboChanged(self):
-        print 'onFilterComboChanged()'
+        print('onFilterComboChanged()')
         if self.filterComboBox.currentText() == 'Reason':
             try:
-                reasons = list(set(c.reason for c in self.snapapi.get_contexts().values()))        
+                reasons = list(set(c.reason for c in list(self.snapapi.get_contexts().values())))        
                 self.filterComboBox2.clear()
                 self.filterComboBox2.setEditable(False)            
                 reasons.sort(key=lambda x: x.lower())
@@ -355,17 +355,17 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
     def onRefreshPressed(self):
         fkey = str(self.filterComboBox.currentText())
         fvalue = str(self.filterComboBox2.currentText())
-        print 'onRefreshPressed(%s,%s)'%(fkey,fvalue)
+        print(('onRefreshPressed(%s,%s)'%(fkey,fvalue)))
         try:
             self.listWidget.blockSignals(True)
             self.listWidget.clear()
             self.listWidget.blockSignals(False)
-            all_ctx = self.snapapi.get_contexts().values()
+            all_ctx = list(self.snapapi.get_contexts().values())
             if fkey!='Attributes':
                 ctxs = [c for c in all_ctx if fandango.searchCl(fvalue, str(c.name) if fkey=='Name' else str(c.reason))]
             else:
                 ctxs = [c for c in all_ctx if any(fandango.functional.searchCl(fvalue,a) \
-                    for a in [c.name,c.reason,c.description]+[av['full_name'] for av in c.attributes.values()])] 
+                    for a in [c.name,c.reason,c.description]+[av['full_name'] for av in list(c.attributes.values())])] 
             if not len(ctxs):
                 msg = QExceptionMessage(self,'Warning','No context in SnapDB is named like "%s"'%(fvalue))
                 ctxs = all_ctx
@@ -405,8 +405,8 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
     def onContextChanged(self, idx=None):
         try:
             cid = self.getCurrentContext(idx)
-            print "onContextChanged(%s,(%s,%s,%s))"%(cid,self.filterComboBox.currentText(),
-                self.filterComboBox2.currentText(),self.contextComboBox.currentText())
+            print(("onContextChanged(%s,(%s,%s,%s))"%(cid,self.filterComboBox.currentText(),
+                self.filterComboBox2.currentText(),self.contextComboBox.currentText())))
             try:
                 self.context=self.snapapi.get_context(cid)
             except:
@@ -427,10 +427,10 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             if self.defaultContextID(): self.defaultContextLabel.setText("<b>%s</b> [%d]" % (self.context.name, self.context.ID))
             
             self.listWidget.clear()
-            print "onContextChanged(%s): get_snapshots()"%(cid)
+            print(("onContextChanged(%s): get_snapshots()"%(cid)))
             self.snapshots=self.context.get_snapshots()
-            print '[%d]'%len(self.snapshots)
-            for id,snapshot in self.snapshots.items():
+            print(('[%d]'%len(self.snapshots)))
+            for id,snapshot in list(self.snapshots.items()):
                 item=Qt.QListWidgetItem()
                 item.setText("%s - %s [ID: %d]" % (snapshot[0], snapshot[1].split('\n')[0], id))
                 item.setData(Qt.Qt.UserRole, Qt.QVariant(id))
@@ -465,15 +465,15 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         try:
             if current==None: return
             id = get_item_id(current)
-            print('onSnapshotChanged(%s)'%id)
+            print(('onSnapshotChanged(%s)'%id))
             snap = self.snapshots[id]
-            attributes = self.snapapi.db.get_snapshot_attributes(id).values()
+            attributes = list(self.snapapi.db.get_snapshot_attributes(id).values())
             self.attributes = [(self.snapapi.db.get_attribute_name(a['id_att']), a['value'] if 'value' in a else (a['read_value'],a['write_value'])) for a in attributes]
             self.tableWidget.clear()
             if not attributes:
                 Qt.QMessageBox.warning(self,"Empty snapshot", "This snapshot appears to have no contents.")
             try:
-                print "onSnapshotChanged(%s)"%(id)
+                print(("onSnapshotChanged(%s)"%(id)))
                 self.taurusForm.setModel([])
                 self.buildTable(self.attributes)
                 self.tableView()
@@ -488,7 +488,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
                 self.viewComboBox.setCurrentIndex(0)
                 self.buildSnap2Box(id)
             except:
-                print traceback.format_exc()
+                print((traceback.format_exc()))
         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())
 
     def buildSnap2Box(self, sid):
@@ -521,7 +521,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             attr_names = reversedict(self.snapapi.db.get_attributes_ids())
             snap1Data = self.snapapi.db.get_snapshot_attributes(sid)
             vals,data = [],[]
-            for name,K,V in sorted((attr_names[int(i)],i,j) for i,j in snap1Data.items()):
+            for name,K,V in sorted((attr_names[int(i)],i,j) for i,j in list(snap1Data.items())):
                 current_attr=factory.getAttribute(name)
                 if ('write_value' in V): #RW
                     rv1=V['read_value']#.values()[0]
@@ -530,7 +530,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
                         rv2=current_attr.getValueObj().value
                         wv2=current_attr.getValueObj().w_value
                     except:
-                        print('ERROR: unable to read %s'%name)
+                        print(('ERROR: unable to read %s'%name))
                         rv2,wv2 = None,None
                 else: #RO
                     rv1=V['value']#.values()[1]
@@ -541,8 +541,8 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
                 if (x,y) == (1,1):
                     vals.append((name,rv1,wv1,rv2,wv2))
                 else:
-                    print x,y
-                    print rv1
+                    print((x,y))
+                    print(rv1)
                     rv1,wv1 = str(rv1).split(','),str(wv1).split(',')
                     if y!=1: rv2,wv2 = [v for w in rv2 for v in w],[v for w in wv2 for v in w]
                     getix = lambda l,ix: (l[ix] if ix<len(l) else None)
@@ -638,7 +638,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
 
     def onLoadPressed(self):
         try:
-            print '%s: onLoadPressed()'%time.ctime()
+            print(('%s: onLoadPressed()'%time.ctime()))
             sid = get_item_id(self.listWidget.currentItem())
             self.loadSnapshot(sid)
         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())
@@ -651,7 +651,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             sid = self.getCurrentSnap()
             qd = Qt.QDialog()
             qd.setWindowTitle('Edit Snap Comment')
-            print str(self.snapshots[sid][1])
+            print((str(self.snapshots[sid][1])))
             qtt = Qt.QTextEdit()
             qtt.setPlainText(str(self.snapshots[sid][1]))
             qbb = Qt.QDialogButtonBox(qd)
@@ -661,7 +661,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             [qd.layout().addWidget(w) for w in (Qt.QLabel('Insert your new commment for Snap:'),qtt,qbb)]
             if qd.exec_() == qd.Accepted:
                 comment = qtt.toPlainText()
-                print comment
+                print(comment)
                 try:
                     self.snapapi.modify_snapshot(sid,comment)
                     self.snapshots[sid][1] = comment
@@ -671,7 +671,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         
     def onImportPressed(self):
         try:
-            print '%s: onImportPressed()'%time.ctime()
+            print(('%s: onImportPressed()'%time.ctime()))
             self.loadFromFile(str(Qt.QFileDialog.getOpenFileName(self,'Load CSV File')))
         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())   
         
@@ -701,7 +701,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
     
     def onExportPressed(self):
         try:
-            import csv, tkFileDialog, Tkinter, datetime
+            import csv, tkinter.filedialog, tkinter, datetime
             sid1 = get_item_id(self.listWidget.currentItem())
             sid2 = get_as_int(self.comp._wi.diffComboBox.itemData(self.comp._wi.diffComboBox.currentIndex()))
 
@@ -716,7 +716,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             elif get_as_int(self.viewComboBox.itemData(self.viewComboBox.currentIndex())) == 0:
                 # EXPORTING THE STORED VALUES TO CSV
                 snapshot=self.context.get_snapshot(sid1)
-                tmpdata=snapshot.items()
+                tmpdata=list(snapshot.items())
 		data = []
 		for r in tmpdata:
 			if len(r[1]) == 2:
@@ -726,12 +726,12 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
                 #data = [(r[0],r[1][0],r[1][1]) for r in data]
                 header=['attribute name', 'read value', 'write value']
 
-            root=Tkinter.Tk()
+            root=tkinter.Tk()
             root.withdraw()
             initname=str(self.contextComboBox.currentText().replace(' ', '_')+"."+str(datetime.date.today()))
             initname=initname.replace('(','')
             initname=initname.replace(')','')
-            filename=tkFileDialog.asksaveasfilename(filetypes=[('all files', '.*'), ('csv files', '.csv')], initialfile=initname, title='Save CSV as...', parent=root)
+            filename=tkinter.filedialog.asksaveasfilename(filetypes=[('all files', '.*'), ('csv files', '.csv')], initialfile=initname, title='Save CSV as...', parent=root)
             writer=csv.writer(open(filename+".csv", "wb"), delimiter="\t")
             writer.writerow(header)
             writer.writerows(data)
@@ -739,10 +739,10 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
         
     def loadSnapshot(self, sid):
         try:
-            print '%s: loadSnapshot(%s)'%(time.ctime(),sid)
-            attrs = [attr['full_name'] for attr in self.context.get_attributes().values() if 'WRITE' in str(attr['writable'])]
+            print(('%s: loadSnapshot(%s)'%(time.ctime(),sid)))
+            attrs = [attr['full_name'] for attr in list(self.context.get_attributes().values()) if 'WRITE' in str(attr['writable'])]
             snapshot=self.context.get_snapshot(sid)
-            from snapdialogs import LoadValuesWidget
+            from .snapdialogs import LoadValuesWidget
             from fandango.qt import QDialogWidget
             self.loadWidget = LoadValuesWidget()
             self.loadWidget.setModel(attrs)
@@ -758,7 +758,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
             fandango.qt.QExceptionMessage(traceback.format_exc())
             
     def loadFromFile(self, filename):
-        print '%s: loadFromFile(%s)'%(time.ctime(),filename)
+        print(('%s: loadFromFile(%s)'%(time.ctime(),filename)))
         if not str(filename.strip()): return
         try:
             import PyTangoArchiving.files
@@ -778,7 +778,7 @@ class SnapForm(Snap_Core_Ui_Form, SnapDialog):
 		    data[a] = (read_value, write_value)
 	    
             #data = dict((a,(table['read value'][i],table['write value'][i])) for i,a in enumerate(attrs))
-            from snapdialogs import LoadValuesWidget
+            from .snapdialogs import LoadValuesWidget
             from fandango.qt import QDialogWidget
             self.loadWidget = LoadValuesWidget()
             self.loadWidget.setModel(attrs)
@@ -850,9 +850,9 @@ def SnapsTool(context=None,show=True):
     ui.setupUi(Form)
     taurus.changeDefaultPollingPeriod(3000)
     if context:
-        print 'Setting Context ...'
+        print('Setting Context ...')
         ui.filterComboBox2.setEditText(context)
-        print 'Refresh ...'
+        print('Refresh ...')
         ui.onRefreshPressed()
     if show: Form.show()
     return ui

@@ -1,0 +1,2013 @@
+--- ./scripts/archiving_load.py	(original)
++++ ./scripts/archiving_load.py	(refactored)
+@@ -15,7 +15,7 @@
+       csv = pta.files.ParseCSV(filename,schema)
+       api = pta.api(schema)
+       archived = api.get_archived_attributes()
+-      print('%s contains %d attributes, %d should be added to archiving'%(filename,len(csv),len([a for a in csv if a not in archived and pta.utils.check_attribute(a) is not None])))
++      print(('%s contains %d attributes, %d should be added to archiving'%(filename,len(csv),len([a for a in csv if a not in archived and pta.utils.check_attribute(a) is not None]))))
+ 
+   if '-dedicate' in str(params):
+       pta.files.DedicateArchiversFromConfiguration(filename, schema, launch=True, restart=True)
+--- ./scripts/db_repair.py	(original)
++++ ./scripts/db_repair.py	(refactored)
+@@ -40,7 +40,7 @@
+     cursor = db_con.cursor()
+     cursor.execute(sql)
+     rset = cursor.fetchall()
+-    print('%d tables match condition'%len(rset))
++    print(('%d tables match condition'%len(rset)))
+     now = time.time()
+     days = days or 60
+     tlimit = fandango.time2str(now-days*24*3600);
+@@ -65,7 +65,7 @@
+               raise Exception('%s is a config table'%item)
+         except Exception as e:
+             print(e)
+-            print('Repairing %s ...' % item)
++            print(('Repairing %s ...' % item))
+             cursor.execute('repair table %s' % item)
+             print('[OK]\n')
+         time.sleep(.001)
+@@ -75,27 +75,27 @@
+ def main():
+     import getopt
+     t0,t1,t2 = sys.argv[1:],''.join(s for s,l,d in __options__ if s),[l for s,l,d in __options__ if l]
+-    print(t0,t1,t2)
++    print((t0,t1,t2))
+     opts,args = getopt.getopt(t0,t1,t2)
+     opts = dict((k.strip('-'),v) for k,v in opts+[('',args)])
+     t0 = time.time()
+     if any(o in opts for o in ('h','?','help')):
+-        print(usage())
++        print((usage()))
+         sys.exit()
+     else:
+         if not opts['']:
+-            user = input('Enter user:')
+-            passwd = input('Enter password:')
++            user = eval(input('Enter user:'))
++            passwd = eval(input('Enter password:'))
+         else:
+             user,passwd = opts[''][:2]
+         db_host = opts.get('host','localhost')
+         os.system('mysqladmin -h %s -u %s -p%s flush-hosts'%(db_host,user,passwd))
+         condition = 'engine is null OR table_schema like "hdb%%" OR table_schema like "tdb%%"'
+         if 'no-prompt' not in opts:
+-            new_condition = input('Query condition (%s):'%condition)
++            new_condition = eval(input('Query condition (%s):'%condition))
+             condition = new_condition.strip() or condition
+         do_repair(user,passwd,condition,force='force' in opts or 'f' in opts,days=int(opts.get('days',0)),db_host=db_host)
+-        print('database repair finished in %d seconds'%(time.time()-t0))
++        print(('database repair finished in %d seconds'%(time.time()-t0)))
+     pass
+ 
+ if (__name__ == '__main__') :
+--- ./scripts/archiving_service.py	(original)
++++ ./scripts/archiving_service.py	(refactored)
+@@ -35,7 +35,7 @@
+     disabled = sorted(['\t'.join((d.name,d.host,str(d.level))) for d in list(astor.values()) if not (d.host or d.level)])
+     
+     print('\n')
+-    print("*"*80)
++    print(("*"*80))
+     print('\n')
+     
+     faulty = []
+@@ -64,29 +64,29 @@
+     print('\n')
+     if goods:
+         print("Servers actually running are:")
+-        print("-"*40)
+-        print('\n'.join(goods))
++        print(("-"*40))
++        print(('\n'.join(goods)))
+         print('\n')
+     
+     if dedicated:
+         print("Devices dedicated are:")
+-        print("-"*40)
+-        print('\n'.join(dedicated))
++        print(("-"*40))
++        print(('\n'.join(dedicated)))
+         print('\n')
+     if faulty:
+         print("Devices in FAULT state are:")
+-        print("-"*40)
+-        print('\n'.join(faulty))
++        print(("-"*40))
++        print(('\n'.join(faulty)))
+         print('\n')
+     if failed:
+         print("Servers that are not working:")
+-        print("-"*40)
+-        print('\n'.join(failed))
++        print(("-"*40))
++        print(('\n'.join(failed)))
+         print('\n')
+     if disabled:
+         print("Servers not registered to any server:")
+-        print("-"*40)
+-        print('\n'.join(disabled))
++        print(("-"*40))
++        print(('\n'.join(disabled)))
+         print('\n')
+ 
+ elif 'start' in sys.argv:
+--- ./scripts/archiver_health_check.py	(original)
++++ ./scripts/archiver_health_check.py	(refactored)
+@@ -22,7 +22,7 @@
+   api.servers.start_servers(ss,wait=0.1)
+   last_restart = time.time()
+   if wait: 
+-    print('\tWaiting %s seconds' %wait)
++    print(('\tWaiting %s seconds' %wait))
+     time.sleep(wait)
+   return ss
+     
+@@ -114,7 +114,7 @@
+         if email and missing:
+             fun.linos.sendmail(msg,txt,email) 
+     except:
+-        print(traceback.format_exc())
++        print((traceback.format_exc()))
+     return missread
+         
+ def minimal_check(schema,interval=3*3600,exclude=".*(wavename|waveid)$",csvs=""):
+@@ -182,7 +182,7 @@
+       nread = 100
+       
+   t1read = float(tread)/nread
+-  print('t1read: %f'%t1read)
++  print(('t1read: %f'%t1read))
+     
+   #BECAUSE ALL BPMS DEPRECATED ARE STILL DEDICATED
+   excluded = [a for a in active if a not in updated and any(e in a for e in exclude)]
+@@ -198,7 +198,7 @@
+   marked.update(idle)
+   
+   if excluded: 
+-    print('ignored : %s'%','.join(excluded))
++    print(('ignored : %s'%','.join(excluded)))
+   print('')
+   
+   txt = ''
+@@ -213,7 +213,7 @@
+   
+   print('')
+   result = {'updates':updates,'active':active,'shouldbe':shouldbe,'lost':lost,'marked':marked,'excluded':excluded,'tread':tread,'nread':nread,'t1read':t1read}
+-  print('nread: %s, tread: %s, t1read: %s'%(nread,tread,t1read))
++  print(('nread: %s, tread: %s, t1read: %s'%(nread,tread,t1read)))
+   
+   try:
+     if save:
+@@ -223,7 +223,7 @@
+     if email and lost>5:
+       fun.linos.sendmail(msg,txt,email) 
+   except:
+-    print(traceback.format_exc())
++    print((traceback.format_exc()))
+     
+   if restart:
+     for s in sorted(depr):
+--- ./scripts/old/archDevs2starter.py	(original)
++++ ./scripts/old/archDevs2starter.py	(refactored)
+@@ -30,7 +30,7 @@
+ 	
+ 	di = db.get_server_info('/'.join([server,instance]))
+ 	di.host,di.controlled,di.startup_level = host,1,level
+-	print('Setting ','/'.join([server,instance]),' with host=',di.host,'; controlled=',di.controlled,'; startup_level=',di.startup_level)
++	print(('Setting ','/'.join([server,instance]),' with host=',di.host,'; controlled=',di.controlled,'; startup_level=',di.startup_level))
+ 	db.put_server_info(di)
+ 	
+ host = 'palantir01'
+--- ./scripts/old/attributes2archiving.py	(original)
++++ ./scripts/old/attributes2archiving.py	(refactored)
+@@ -30,7 +30,7 @@
+   deletelist is a list, contains the attributes to be removed from archiving
+   context is a dictionary, contains the information about the authority of the configuration
+   '''
+-  print('Loading CSV/XML file ...',filename)
++  print(('Loading CSV/XML file ...',filename))
+   config = CSVArray()
+   config.load(filename,comment='#')
+   headers=['Device','Host','Attribute','Type','ArchivingMode','Periode','MinRange','MaxRange']
+@@ -76,7 +76,7 @@
+   archmodes={'PERIODIC':'MODE_P','ABSOLUTE':'MODE_A','RELATIVE':'MODE_R','THRESHOLD':'MODE_T','CALC':'MODE_C','EXTERNAL':'MODE_E'}
+   for host,devs in sorted(hosts.items()):
+     for dev,attributes in sorted(devs.items()):
+-      print('reading device %s:%s'%(dev,str(attributes)))
++      print(('reading device %s:%s'%(dev,str(attributes))))
+       template=[a for a in attributes if '@COPY' in a]
+       if template:
+         if ':' in template[0]:
+@@ -94,18 +94,18 @@
+       defaults = [(a,v) for a,v in list(attributes.items()) if '@DEFAULT' in a and v]
+       DEFAULT_MODE = defaults and {} or {'MODE_P':[300000]}
+       for a,tipus in defaults:
+-        mode,params = list(tipus.values())[0].items()[0]
++        mode,params = list(list(tipus.values())[0].items())[0]
+         mode =  archmodes.get(mode.upper(),mode)
+         DEFAULT_MODE[mode] = params
+-        print(dev,'.DEFAULT_MODE=',DEFAULT_MODE)
++        print((dev,'.DEFAULT_MODE=',DEFAULT_MODE))
+         attributes.pop(a)
+       
+       for attribute,modes in sorted(attributes.items()):
+         config = dict(list(DEFAULT_MODE.items()))
+         if not modes:
+-          print('\treading attribute %s: using default modes %s'%(attribute,str(DEFAULT_MODE)))
++          print(('\treading attribute %s: using default modes %s'%(attribute,str(DEFAULT_MODE))))
+         else:
+-          print('\treading attribute %s:%s'%(attribute,str(modes)))
++          print(('\treading attribute %s:%s'%(attribute,str(modes))))
+           tipus=list(modes.keys())[0]
+           #And modes is overriden by its own member
+           modes=list(modes.values())[0]
+@@ -122,21 +122,21 @@
+             if 'MODE_P' not in config: config.update(list(DEFAULT_MODE.items()))
+             for mode,params in list(modes.items()):
+               if not mode: continue
+-              print('\treading mode %s:%s'%(mode,str(params)))
++              print(('\treading mode %s:%s'%(mode,str(params))))
+               mode=mode.upper()
+               if mode in list(archmodes.keys()):
+                 mode=archmodes[mode]
+               elif mode not in list(archmodes.values()):
+-                print('Unknown mode!: ',mode)
++                print(('Unknown mode!: ',mode))
+                 continue
+               params = [float(p) for p in params if p]
+               config[mode]=params
+             attrslist[dev+'/'+attribute]={'host':host,'type':tipus,'modes':config}
+             #print 'attrslist[%s/%s]=%s'%(dev,attribute,attrslist[dev+'/'+attribute])
+ 
+-  print('Specified %d attributes from %d hosts'%(len(attrslist),len(hosts)))
+-  if dedicated: print('%d devices are dedicated'%(len(dedicated)))
+-  if deletelist: print('%d attributes to delete'%(len(deletelist)))
++  print(('Specified %d attributes from %d hosts'%(len(attrslist),len(hosts))))
++  if dedicated: print(('%d devices are dedicated'%(len(dedicated))))
++  if deletelist: print(('%d attributes to delete'%(len(deletelist))))
+   
+   return attrslist
+ #END OF loadCSVFile
+@@ -148,12 +148,12 @@
+     try:
+         dp.ping()
+     except Exception as e:
+-        print('%s is not working: %s'%(dev,str(e)))
++        print(('%s is not working: %s'%(dev,str(e))))
+     try:
+         a_value = dp.read_attribute(attr)
+         return a_value.value
+     except Exception as e:
+-        print('%s.%s failed: %s'%(dev,attr,str(e)))
++        print(('%s.%s failed: %s'%(dev,attr,str(e))))
+     return False
+ 
+ def restartAttributes(attrslist,deletelist,arch_type):
+@@ -172,7 +172,7 @@
+     attrs=list(attrslist.keys())
+     #Attributes to delete
+     if deletelist:
+-      print('Stopping archiving for all selected attributes ... ',deletelist)
++      print(('Stopping archiving for all selected attributes ... ',deletelist))
+       for a in attrs:
+         if a not in deletelist and a.rsplit('/',1)[0] in deletelist:
+           deletelist.append(a)
+@@ -181,7 +181,7 @@
+           attrs.remove(a)
+       for d in deletelist:
+         if d.count('/')==2: deletelist.remove(d)
+-      print('deletelist enhanced to ',deletelist)
++      print(('deletelist enhanced to ',deletelist))
+       #THIS PART OF THE CODE IS NOT REALLY WORKING!
+       api.attr_StopArchiving(deletelist,arch_type)
+   
+@@ -193,16 +193,16 @@
+       if modestring in list(modeslist.keys()): modeslist[modestring].append(a)
+       else: modeslist[modestring]=[a]
+     for modes,alist in list(modeslist.items()):
+-      print('Starting archiving for all attributes with mode %s'%modes)
++      print(('Starting archiving for all attributes with mode %s'%modes))
+       api.attr_StartArchiving(alist,arch_type,ArchivedAttribute().extractModeString(modes))
+     
+   except PyTango.DevFailed as e:
+     PyTango.Except.print_exception(e)
+   except Exception as e:
+     exstring = traceback.format_exc()
+-    print('Exception occurred and catched: ', exstring)
+-    print("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name)  
+-    print('Last exception was: \n'+str(e)+'\n')
++    print(('Exception occurred and catched: ', exstring))
++    print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))  
++    print(('Last exception was: \n'+str(e)+'\n'))
+ 
+   pass 
+ 
+@@ -216,7 +216,7 @@
+   '''
+   result = {}
+   if len(attrslist)>MAX_SIZE:
+-    print('splitAttributesInGroups: More than %d attributes in a single list!!!, splitting by domains ...'%MAX_SIZE)
++    print(('splitAttributesInGroups: More than %d attributes in a single list!!!, splitting by domains ...'%MAX_SIZE))
+     # If the list of attributes is >100 it is split into domains
+     domains = {}
+     for a in attrslist:
+@@ -263,7 +263,7 @@
+   if archivers:
+     print('Loads of existing archivers are: ')
+     for n,l in list(archivers.items()):
+-      if l: print('%s:\t%d'%(n,l))
++      if l: print(('%s:\t%d'%(n,l)))
+ 
+   #Using the result of api.DB_loadAttrStatus() instead   #creating a dictionary {attribute:archiver}
+   previous_archiver={}
+@@ -288,7 +288,7 @@
+     
+     #Create regular expression for finding a suitable archiver
+     if dev in list(dedicated.keys()):
+-      print('The device %s has a dedicated archiver.'%dev)
++      print(('The device %s has a dedicated archiver.'%dev))
+       label = dedicated[dev]
+       reg = ('(.*?%s.*?%s-)([0-9]{2,2})'%(host,label)).lower()
+       server='%sArchiver/%s_%s'%('Hdb' if arch_type=='hdb' else 'Tdb',host,label)
+@@ -301,7 +301,7 @@
+     if a.lower() in list(previous_archiver.keys()) and re.match(reg,previous_archiver[a.lower()].lower()):
+       #Keeping the same archiver that was being used previously
+       archiver=previous_archiver[a.lower()]
+-      print('Attribute %s will use the same archiver %s'%(a,archiver))
++      print(('Attribute %s will use the same archiver %s'%(a,archiver)))
+       
+       #DEPRECATED BECAUSE THE API DOESN'T RESPECT THE EXECUTABLE NAME CASE
+       #try:
+@@ -313,7 +313,7 @@
+       if not api.server_Ping(archiver):
+         if host not in mod_hosts: mod_hosts[host]={}
+         if server not in mod_hosts[host]: mod_hosts[host][server]=[]
+-        print('Archiver %s exists but is not running, it must be started!'%(archiver))
++        print(('Archiver %s exists but is not running, it must be started!'%(archiver)))
+         mod_hosts[host][server].append(archiver)
+     else:  
+       #Creating a new link archiver-attribute
+@@ -346,7 +346,7 @@
+         archiver='%sArchiver/%s/%s-01'%('Hdb' if arch_type=='hdb' else 'Tdb',host,label)
+         server='%sArchiver/%s_%s'%('Hdb' if arch_type=='hdb' else 'Tdb',host,label)
+       else:
+-        print('No matching archiver has been found for %s'%a)
++        print(('No matching archiver has been found for %s'%a))
+ 
+       #Adding to mod_hosts the server with new,not_running or dedicated archivers
+       if archiver not in list(archivers.keys()) or not api.server_Ping(archiver) or dev in list(dedicated.keys()):
+@@ -354,14 +354,14 @@
+         if server not in mod_hosts[host]: mod_hosts[host][server]=[]
+         if not (dev in list(dedicated.keys())): #The archiver is new or not running
+           if archiver not in list(archivers.keys()): #Creating new archivers if necessary
+-            print('Creating new archiver %s on %s'%(archiver,server))
++            print(('Creating new archiver %s on %s'%(archiver,server)))
+             di = DbDevInfo()
+             di.name,di._class,di.server = archiver,'%sArchiver'%('Hdb' if arch_type=='hdb' else 'Tdb',),server
+             api.db.add_device(di)
+             archivers[archiver.lower()]=1
+             archiver_properties[archiver.lower()]={}
+           else: #It means that server_Ping has failed! 
+-            print('Archiver %s exists but is not running, it must be started!'%(archiver))
++            print(('Archiver %s exists but is not running, it must be started!'%(archiver)))
+           mod_hosts[host][server].append(archiver)
+         else:
+             pass
+@@ -377,23 +377,23 @@
+               d['reservedAttributes']=[]
+             if 'isDedicated' not in d or not d['isDedicated']: d['isDedicated']=['TRUE']
+             if a not in d['reservedAttributes']:
+-              print('Adding attribute %s to archiver %s'%(a,arch))
++              print(('Adding attribute %s to archiver %s'%(a,arch)))
+               d['reservedAttributes'].append(a)
+               if archiver not in mod_hosts[host][server]: mod_hosts[host][server].append(archiver)
+               if archiver not in mod_archivers: mod_archivers.append(archiver)
+             else:
+-              print('The attribute %s was already assigned to archiver %s; but it doesnt appear to be the actual archiver!!!'%(a,arch))
++              print(('The attribute %s was already assigned to archiver %s; but it doesnt appear to be the actual archiver!!!'%(a,arch)))
+               if archiver not in mod_hosts[host][server]: mod_hosts[host][server].append(archiver)
+               if archiver not in mod_archivers: mod_archivers.append(archiver)
+           elif 'reservedAttributes' in d and a in d['reservedAttributes']:
+-            print('Removing attribute %s from archiver %s'%(a,arch))
++            print(('Removing attribute %s from archiver %s'%(a,arch)))
+             d['reservedAttributes'].remove(a)
+             #@TODO: When host information for existing servers become readable
+             # this lines must be changed.
+             mod_hosts[host][server].append(arch)
+             if arch not in mod_archivers: mod_archivers.append(arch)
+           elif ('reservedAttributes' not in d or not len(d['reservedAttributes'])) and 'isDedicated' in d and 'TRUE' in d['isDedicated']:
+-            print('Removing isDedicated property from archiver %s'%(arch))
++            print(('Removing isDedicated property from archiver %s'%(arch)))
+             d['reservedAttributes']=[]
+             d['isDedicated']=['FALSE']
+             mod_hosts[host][server].append(arch)
+@@ -411,7 +411,7 @@
+       pathprops=['DbPath','DiaryPath','DsPath']
+       tdbpath='/tmp/archiving/tdb'
+       if any(p not in val or val[p][0]!=tdbpath for p in pathprops):
+-        print('Updating TdbPath properties of %s'%archiver)
++        print(('Updating TdbPath properties of %s'%archiver))
+         [archiver_properties[archiver].__setitem__(p,[tdbpath]) for p in pathprops]
+         if host not in mod_hosts: mod_hosts[host]={}
+         if server not in mod_hosts[host]: mod_hosts[host][server]=[]
+@@ -419,7 +419,7 @@
+         if archiver not in mod_archivers: mod_archivers.append(archiver)
+     pass #End of checking each attribute archiver
+     
+-  print('Updating properties of %d archivers ...'%(len(mod_archivers)))
++  print(('Updating properties of %d archivers ...'%(len(mod_archivers))))
+   for archiver in mod_archivers:
+     #print 'Updating properties of %s: %s'%(archiver,str(archiver_properties[archiver]))
+     api.db.put_device_property(archiver,archiver_properties[archiver])
+@@ -437,7 +437,7 @@
+   #deletelist=[]
+   #context={}
+   attrslist=loadCSVfile(filename)#,dedicated,deletelist,context)
+-  print('%d attributes read from %s file'%(len(attrslist),filename))
++  print(('%d attributes read from %s file'%(len(attrslist),filename)))
+   #Now all the previous lists are initialized
+    
+   #Get attributes in both DB and file
+@@ -544,5 +544,5 @@
+ #THIS WERE THE ARGUMENTS THAT WORKED ON TG_DEVTEST: 0,1,sim/pysignalsimulator/01-01/A1,MODE_P,10000.
+ 
+ if __name__ == "__main__":
+-  print('argv are "%s"'%(sys.argv))
++  print(('argv are "%s"'%(sys.argv)))
+   attributes2archiving(filename=sys.argv[1],arch_type=sys.argv[2] if len(sys.argv)>2 else 'hdb')
+--- ./scripts/old/devs2tdb.py	(original)
++++ ./scripts/old/devs2tdb.py	(refactored)
+@@ -14,7 +14,7 @@
+ if len(sys.argv) >= 3:
+ 	nservs = int(sys.argv[1])
+ 	ndevs = int(sys.argv[2])
+-	print('nservs=',nservs,';ndevs=',ndevs)
++	print(('nservs=',nservs,';ndevs=',ndevs))
+ 	
+ if len(sys.argv) >= 4:
+ 	period = int(sys.argv[3])
+@@ -35,7 +35,7 @@
+ 		isArch = dp.command_inout('IsArchivedTdb',attributes)
+ 		for i,v in enumerate(isArch):
+ 			if v:
+-				print('Attributes ',attributes,' are actually being archived ... Stopping ...')
++				print(('Attributes ',attributes,' are actually being archived ... Stopping ...'))
+ 				dp.command_inout('ArchivingStopTdb',attributes[i:i+1])
+ 		r = dp.command_inout('ArchivingStartTdb',args) #It Worked!
+ 		#print 'c'
+@@ -47,18 +47,18 @@
+ 		PyTango.Except.print_exception(e)
+ 	except Exception as e:
+             	exstring = traceback.format_exc()
+-            	print('Exception occurred and catched: ', exstring)
+-		print("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name)	
+-		print('Last exception was: \n'+str(e)+'\n')
++            	print(('Exception occurred and catched: ', exstring))
++		print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))	
++		print(('Last exception was: \n'+str(e)+'\n'))
+ 
+ if nservs is None:
+-	nservs = int(input('How many servers do you want to register %02d?'))
++	nservs = int(eval(input('How many servers do you want to register %02d?')))
+ if sstart is None:
+-	sstart = int(input('Starting with?'))
++	sstart = int(eval(input('Starting with?')))
+ if ndevs is None:
+-	ndevs = int(input('How many devices do you want to register from each server?'))
++	ndevs = int(eval(input('How many devices do you want to register from each server?')))
+ if period is None:
+-	period = int(input('Archiving Period?'))
++	period = int(eval(input('Archiving Period?')))
+ 
+ for m in range(sstart,sstart+nservs):
+ 	attributes=[]
+@@ -69,7 +69,7 @@
+ 		device='sim/pysignalsimulator/'+member
+ 		#attributes.append(device+'/A1')
+ 		attributes=[device+'/A1']
+-		print('Starting TdbArchiver with mode ',mode,' for attributes: ',attributes)
++		print(('Starting TdbArchiver with mode ',mode,' for attributes: ',attributes))
+ 		dev2tdb(config,attributes,mode)
+ 		time.sleep(1)
+ 
+--- ./scripts/old/devs2hdb.py	(original)
++++ ./scripts/old/devs2hdb.py	(refactored)
+@@ -14,7 +14,7 @@
+ if len(sys.argv) >= 3:
+ 	nservs = int(sys.argv[1])
+ 	ndevs = int(sys.argv[2])
+-	print('nservs=',nservs,';ndevs=',ndevs)
++	print(('nservs=',nservs,';ndevs=',ndevs))
+ 	
+ if len(sys.argv) >= 4:
+ 	period = int(sys.argv[3])
+@@ -30,7 +30,7 @@
+ 		isArch = dp.command_inout('IsArchivedHdb',attributes)
+ 		for i,v in enumerate(isArch):
+ 			if v:
+-				print('Attributes ',attributes,' are actually being archived ... Stopping ...')
++				print(('Attributes ',attributes,' are actually being archived ... Stopping ...'))
+ 				dp.command_inout('ArchivingStopHdb',attributes[i:i+1])
+ 		time.sleep(1.)
+ 		r = dp.command_inout('ArchivingStartHdb',args) #It Worked!
+@@ -43,18 +43,18 @@
+ 		PyTango.Except.print_exception(e)
+ 	except Exception as e:
+             	exstring = traceback.format_exc()
+-            	print('Exception occurred and catched: ', exstring)
+-		print("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name)	
+-		print('Last exception was: \n'+str(e)+'\n')
++            	print(('Exception occurred and catched: ', exstring))
++		print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))	
++		print(('Last exception was: \n'+str(e)+'\n'))
+ 
+ if nservs is None:
+-	nservs = int(input('How many servers do you want to register %02d?'))
++	nservs = int(eval(input('How many servers do you want to register %02d?')))
+ if sstart is None:
+-	sstart = int(input('Starting with?'))
++	sstart = int(eval(input('Starting with?')))
+ if ndevs is None:
+-	ndevs = int(input('How many devices do you want to register from each server?'))
++	ndevs = int(eval(input('How many devices do you want to register from each server?')))
+ if period is None:
+-	period = int(input('Archiving Period?'))	
++	period = int(eval(input('Archiving Period?')))	
+ 
+ for m in range(sstart,sstart+nservs):
+ 	attributes=[]
+@@ -66,7 +66,7 @@
+ 		device='sim/pysignalsimulator/'+member
+ 		#attributes.append(device+'/A1')
+ 		attributes=[device+'/A1']
+-		print('Starting HdbArchive with mode ',mode,' for attributes: ',attributes)
++		print(('Starting HdbArchive with mode ',mode,' for attributes: ',attributes))
+ 		dev2archiver(config,attributes,mode)
+ 		time.sleep(20.)
+ 
+--- ./scripts/old/createArchDevs.py	(original)
++++ ./scripts/old/createArchDevs.py	(refactored)
+@@ -15,10 +15,10 @@
+ 	
+ createServers = True
+ if createServers:
+-	print('Creating Archiving device Servers: \n', \
++	print(('Creating Archiving device Servers: \n', \
+ 		'ArchivingManager/1, SnapManager/1, HdbArchiver/01-',nDS,', TdbArchiver/01-',nDS, \
+ 		'SnapArchiver/1, HdbExtractor/1, TdbExtractor/1, SnapExtractor/1, ',\
+-		'HdbArchivingWatcher/1, TdbArchivingWatcher/1')
++		'HdbArchivingWatcher/1, TdbArchivingWatcher/1'))
+ 	addArchDev('ArchivingManager','1','1')
+ 	addArchDev('SnapManager','1','1')
+ 	for m in range(1,nDS+1):
+--- ./scripts/old/stopArchiving.py	(original)
++++ ./scripts/old/stopArchiving.py	(refactored)
+@@ -21,15 +21,15 @@
+ 				if r is not None:
+ 					print(r)
+ 			else:
+-				print('Attributes ',attributes[i:i+1],' are not being archived!!!')
++				print(('Attributes ',attributes[i:i+1],' are not being archived!!!'))
+ 		pass
+ 	except PyTango.DevFailed as e:
+ 		PyTango.Except.print_exception(e)
+ 	except Exception as e:
+             	exstring = traceback.format_exc()
+-            	print('Exception occurred and catched: ', exstring)
+-		print("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name)	
+-		print('Last exception was: \n'+str(e)+'\n')
++            	print(('Exception occurred and catched: ', exstring))
++		print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))	
++		print(('Last exception was: \n'+str(e)+'\n'))
+ 
+ if len(sys.argv)==2 and sys.argv[1]=='ALL':
+ 	try:	
+@@ -41,7 +41,7 @@
+ 		if len(attribslist):
+                         for s in attribslist:
+                                 attr = s.split(':')[0]
+-                                print('Stopping HDB archiving ... ',attr)
++                                print(('Stopping HDB archiving ... ',attr))
+                                 dp.command_inout('ArchivingStopHdb',[attr]);
+ 		
+ 		watcher = DeviceProxy('archiving/tdbarchivingwatcher/1')
+@@ -51,7 +51,7 @@
+ 		if len(attribslist):
+ 			for s in attribslist:
+ 				attr = s.split(':')[0]
+-				print('Stopping TDB archiving ... ',attr)
++				print(('Stopping TDB archiving ... ',attr))
+ 				dp.command_inout('ArchivingStopTdb',[attr]);
+ 		
+ 	except PyTango.DevFailed as e:
+@@ -59,22 +59,22 @@
+ 		
+ 	except Exception as e:
+             	exstring = traceback.format_exc()
+-            	print('Exception occurred and catched: ', exstring)
+-		print("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name)	
+-		print('Last exception was: \n'+str(e)+'\n')	
++            	print(('Exception occurred and catched: ', exstring))
++		print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))	
++		print(('Last exception was: \n'+str(e)+'\n'))	
+ else:
+ 	if len(sys.argv) >= 3:
+ 		nservs = int(sys.argv[1])
+ 		ndevs = int(sys.argv[2])
+-		print('nservs=',nservs,';ndevs=',ndevs)
++		print(('nservs=',nservs,';ndevs=',ndevs))
+ 	#THIS WERE THE ARGUMENTS THAT WORKED ON TG_DEVTEST: 0,1,sim/pysignalsimulator/01-01/A1,MODE_P,10000.
+ 	
+ 	if nservs is None:
+-		nservs = int(input('How many servers do you want to stop %02d?'))
++		nservs = int(eval(input('How many servers do you want to stop %02d?')))
+ 	if sstart is None:
+-		sstart = int(input('Starting with?'))
++		sstart = int(eval(input('Starting with?')))
+ 	if ndevs is None:
+-		ndevs = int(input('How many devices do you want to stop for each server?'))
++		ndevs = int(eval(input('How many devices do you want to stop for each server?')))
+ 	
+ 	for m in range(sstart,1+nservs):
+ 		attributes=[]
+@@ -83,7 +83,7 @@
+ 			device='sim/pysignalsimulator/'+member
+ 			#attributes.append(device+'/A1')
+ 			attributes=[device+'/A1']
+-			print('Stoping HdbArchiver for attributes: ',attributes)
++			print(('Stoping HdbArchiver for attributes: ',attributes))
+ 			stopArchiving(attributes)
+ 			
+ 	for m in range(sstart,1+nservs):
+@@ -93,7 +93,7 @@
+ 			device='sim/pysignalsimulator/'+member
+ 			#attributes.append(device+'/A1')
+ 			attributes=[device+'/A1']
+-			print('Stoping TdbArchiver for attributes: ',attributes)
++			print(('Stoping TdbArchiver for attributes: ',attributes))
+ 			stopArchiving(attributes,'Tdb')
+ 	
+ 		#time.sleep(3)
+--- ./PyTangoArchiving/reader.py	(original)
++++ ./PyTangoArchiving/reader.py	(refactored)
+@@ -77,7 +77,7 @@
+     i,failed = 0,[]
+     while i<len(values)-1:
+         if not isNaN(values[i][1]) and isNaN(values[i+1][1]):
+-            print('found error at %s' % time.ctime(values[i+1][0]))
++            print(('found error at %s' % time.ctime(values[i+1][0])))
+             try:
+                 next = next((j for j in range(i+1,len(values)) if not isNaN(values[j][1])))
+                 failed.append((values[i][0],values[i+1][0],values[next][0]))
+--- ./PyTangoArchiving/snap.py	(original)
++++ ./PyTangoArchiving/snap.py	(refactored)
+@@ -95,13 +95,13 @@
+                 self.api.tango.get_class_property('SnapArchiver',['DbUser'])['DbUser'][0],self.api.tango.get_class_property('SnapArchiver',['DbHost'])['DbHost'][0]
+                 )
+             passwd=self.api.tango.get_class_property('SnapArchiver',['DbPassword'])['DbPassword'][0]
+-            print('Connecting to %s as %s ...' % (host,user))
++            print(('Connecting to %s as %s ...' % (host,user)))
+             self.set_db_config(api,host,user,passwd)
+           
+             try:
+                 if load: self.load_contexts()
+             except:
+-                print(traceback.format_exc())
++                print((traceback.format_exc()))
+                 print('ERROR: Unable to load contexts')
+         except Exception as e:
+             #print traceback.format_exc()
+@@ -180,7 +180,7 @@
+         if wildcard in (None,'*'):
+             to_delete = [k for k in self.contexts if k not in ids]
+             if to_delete:
+-                print('deleting %d contexts ...'%len(to_delete))
++                print(('deleting %d contexts ...'%len(to_delete)))
+                 [self.contexts.pop(k) for k in to_delete]
+         return ids
+     
+@@ -232,7 +232,7 @@
+                 ##The attribute is not supported by the actual release of the snapshoting system
+                 return False
+         except Exception as e:
+-            print('SnapAPI.check_attribute_allowed(%s): Exception trying to check attribute: %s'%(attr,str(e)))
++            print(('SnapAPI.check_attribute_allowed(%s): Exception trying to check attribute: %s'%(attr,str(e))))
+             return allow_exceptions or None
+ 
+     def filter_attributes_allowed(self,attributes,allow_exceptions=False):
+@@ -247,7 +247,7 @@
+             [goods.append(device+'/'+attr.name) for attr in alq if self.check_attribute_allowed(attr,allow_exceptions)]
+             return goods
+         except Exception as e:
+-            print('SnapAPI.filter_device_attributes_allowed(%s): Exception trying to check device: %s'%(device,str(e)))
++            print(('SnapAPI.filter_device_attributes_allowed(%s): Exception trying to check device: %s'%(device,str(e))))
+             return allow_exceptions and goods or []
+ 
+     def create_context(self,author,name,reason,description,attributes):
+@@ -321,16 +321,16 @@
+         
+     def remove_context(self, context_id,load=True):
+         """ removes the existing context in the database """
+-        print("remove context" , context_id)
++        print(("remove context" , context_id))
+         self.db.remove_context(context_id,snap=True)
+         if load: self.load_contexts()
+     
+     def modify_snapshot(self,snapid,comment=''):
+         try:
+-            print('%s: ArchivingManager.UpdateSnapComment(%s,%s)'%(time.ctime(),snapid,comment))
++            print(('%s: ArchivingManager.UpdateSnapComment(%s,%s)'%(time.ctime(),snapid,comment)))
+             self.manager.command_inout('UpdateSnapComment',[[snapid],[str(comment)]])
+         except:
+-            print('SnapAPI.set_snap_comment(%s): Failed!: %s'%(snapid,traceback.format_exc()))
++            print(('SnapAPI.set_snap_comment(%s): Failed!: %s'%(snapid,traceback.format_exc())))
+ 
+     ## @}
+     ## @name Argument conversion
+@@ -439,7 +439,7 @@
+             if not self.snapshots: self.get_snapshots()
+             snapid = sorted(self.snapshots.keys())[-1]
+         if snapid not in self.snapshots:
+-            print('.get_snapshot(%d): Unknown snap_id, loading from db ...'%snapid)
++            print(('.get_snapshot(%d): Unknown snap_id, loading from db ...'%snapid))
+             self.get_snapshots()
+             if snapid not in self.snapshots:
+                 raise Exception('SnapIDNotFoundInThisContext! {0}'.format(snapid))
+@@ -466,7 +466,7 @@
+         """ It returns the ID of the last snapshot in db with timestamp below date;
+         @param date It can be datetime or time epoch, date=-1 returns the last snapshot; date=0 or None returns the first
+         """
+-        print('In SnapContext.get_snapshot_by_date(%s)'%date)
++        print(('In SnapContext.get_snapshot_by_date(%s)'%date))
+         if update:
+             self.get_snapshots(\
+                 date=(None if date in (0,-1) else date),\
+@@ -497,7 +497,7 @@
+                 if self.snapshots[keys[i]][0]<=date<self.snapshots[keys[i+1]][0]:
+                     return self.get_snapshot(keys[i])
+             self.api.warning('No matching snapshot found for date = %s'%date)
+-            print('No matching snapshot found for date = %s'%date)
++            print(('No matching snapshot found for date = %s'%date))
+             return None
+     # @}
+     #--------------------------------------------------------------------------------------
+@@ -535,7 +535,7 @@
+             self.info('\t%s.LaunchSnapshot(%s)'%(archiver.name(),self.ID))
+             archiver.set_timeout_millis(60000)
+             result = archiver.command_inout('LaunchSnapShot',self.ID) #Awfully, it returns None instead of SnapID
+-            print('%s.LaunchSnapshot(%s) = %s'%(archiver,self.ID,result))
++            print(('%s.LaunchSnapshot(%s) = %s'%(archiver,self.ID,result)))
+             time.sleep(timewait) #Waiting for the database to update ...
+             
+             nextID = archiver.getSnapShotResult(self.ID)
+@@ -578,11 +578,11 @@
+ 
+     def set_comment(self,comment=''):
+         try:
+-            print('%s: ArchivingManager.UpdateSnapComment(%s,%s)'%(time.ctime(),self.ID,comment))
++            print(('%s: ArchivingManager.UpdateSnapComment(%s,%s)'%(time.ctime(),self.ID,comment)))
+             getSingletonAPI(schema='snap').get_manager().command_inout('UpdateSnapComment',[[self.ID],[comment]])
+             self.comment = comment
+         except:
+-            print('Snapshot(%s).set_comment(...): Failed!: %s'%(self.ID,traceback.format_exc()))
++            print(('Snapshot(%s).set_comment(...): Failed!: %s'%(self.ID,traceback.format_exc())))
+             
+     @staticmethod
+     def cast_snapshot_values(attr_value,data_format,data_type):
+@@ -657,7 +657,7 @@
+         """SnapDB Singleton creator
+         @param api it links the SnapDB object to its associated SnapAPI (unneeded?)
+         """
+-        print('Creating SnapDB object ... (%s,%s,%s,%s,%s)' % (api,host,user,passwd,db_name))
++        print(('Creating SnapDB object ... (%s,%s,%s,%s,%s)' % (api,host,user,passwd,db_name)))
+         self._api=api if api else None
+         FriendlyDB.__init__(self,db_name,host or (api and api.arch_host) or 'localhost',user,passwd)
+         assert hasattr(self,'db'),'SnapDB_UnableToCreateConnection'
+@@ -761,18 +761,18 @@
+         context_ids = dict((a[0],(a[1],a[2])) for a in context_ids if a)
+         for id_context in context_ids:
+             snaps = self.get_context_snapshots(id_context)
+-            print('Displaying information about context %d: %s'%(id_context,context_ids[id_context]))
+-            print('Contexts\' %d attributes:'%id_context)
+-            print(self.get_context_attributes(id_context))
+-            print('Contexts\' %d snapshots:'%id_context)
++            print(('Displaying information about context %d: %s'%(id_context,context_ids[id_context])))
++            print(('Contexts\' %d attributes:'%id_context))
++            print((self.get_context_attributes(id_context)))
++            print(('Contexts\' %d snapshots:'%id_context))
+             print(snaps)
+             print('Summary:')
+-            print('Context number %d'%id_context)
+-            print('Number of attributes:',self.get_number_of_attributes(id_context))
+-            print('Number of snapshots:', self.get_number_of_snapshots(id_context))
++            print(('Context number %d'%id_context))
++            print(('Number of attributes:',self.get_number_of_attributes(id_context)))
++            print(('Number of snapshots:', self.get_number_of_snapshots(id_context)))
+             if self.get_number_of_snapshots(id_context) > 0:
+                 snap_dt = snaps[0][1]
+-                print(snap_dt.strftime('Last snapshot taken on day %F at %T.'))
++                print((snap_dt.strftime('Last snapshot taken on day %F at %T.')))
+             print('')
+         self.info('thats all')
+         return True
+@@ -1181,26 +1181,26 @@
+ 
+ def __test__():
+     def test_step(n,msg):
+-        print('-'*80)
+-        print(' '+'Test %s: %s'%(n,msg))
+-        print('-'*80)
++        print(('-'*80))
++        print((' '+'Test %s: %s'%(n,msg)))
++        print(('-'*80))
+         
+     try:
+-        print('\nPyTangoArchiving.Snap.test()\n'+'-'*80)
++        print(('\nPyTangoArchiving.Snap.test()\n'+'-'*80))
+         
+         api = SnapAPI()
+         if 'get' in str(sys.argv):
+             aid = 42
+             name = api.db.get_attribute_name(aid)
+-            print(name,'\n',api.attributes[name])
+-            print('contexts\n',[api.contexts[c] for c in api.attributes[name]['contexts']])
+-            print('snapshots\n','\n'.join(map(str,api.get_attribute_snapshots(name))))
++            print((name,'\n',api.attributes[name]))
++            print(('contexts\n',[api.contexts[c] for c in api.attributes[name]['contexts']]))
++            print(('snapshots\n','\n'.join(map(str,api.get_attribute_snapshots(name)))))
+             #print 'snapshots\n',api.db.get_snapshots(list(api.attributes[name]['snapshots'])[0])
+-            print(api.attributes[name]['snapshots'])
+-            print('snapshots\n',api.db.get_snapshots((47,46)))
++            print((api.attributes[name]['snapshots']))
++            print(('snapshots\n',api.db.get_snapshots((47,46))))
+             
+         if 'create' in str(sys.argv):
+-            print(api.get_contexts())
++            print((api.get_contexts()))
+             attrs = fandango.get_matching_attributes('sys/tg_test/1/(long|double)*(scalar_rww|spectrum)',fullname=False)
+             try:
+                 test_step(1,'CreateContext')
+@@ -1215,7 +1215,7 @@
+                 api.db.print_context_info(ctx.name)
+                 test_step(4,'Delete Snap')
+                 api.db.remove_snapshot(s.ID)
+-                print(ctx.get_snapshots())
++                print((ctx.get_snapshots()))
+             except:
+                 test_step('ERROR',traceback.print_exc())
+             test_step(5,'Delete Context')
+@@ -1229,9 +1229,9 @@
+             else:
+                 print('"test" context not found')
+     except:
+-        print('!'*80)
++        print(('!'*80))
+         print('PyTangoArchiving.Snap.test() failed!!\n')
+-        print(traceback.format_exc())
++        print((traceback.format_exc()))
+     return
+ 
+ if __name__ == '__main__':
+--- ./PyTangoArchiving/tests.py	(original)
++++ ./PyTangoArchiving/tests.py	(refactored)
+@@ -2,7 +2,7 @@
+ 
+ class EvalReader(PyTangoArchiving.Reader):
+   def get_attribute_values(self,attribute,start_date,stop_date=None,asHistoryBuffer=False,N=0):
+-    print('get_attribute_values(%s)'%attribute)
++    print(('get_attribute_values(%s)'%attribute))
+     is_eval = expandEvalAttribute(attribute)
+     if stop_date is None: stop_date=time.time()
+     if is_eval:
+--- ./PyTangoArchiving/web.py	(original)
++++ ./PyTangoArchiving/web.py	(refactored)
+@@ -116,7 +116,7 @@
+ def jqplot(title,vals,y2vals=None,xvals=None):
+     #USING jqPlot instead of Qt
+     ats = sorted(vals.keys())
+-    print('JQPlot(%s,%s)'%(len(ats),','.join(ats)))
++    print(('JQPlot(%s,%s)'%(len(ats),','.join(ats))))
+     js = JS_PATH
+     includes = JS_INCLUDES
+     jqplot = """
+--- ./PyTangoArchiving/archiving.py	(original)
++++ ./PyTangoArchiving/archiving.py	(refactored)
+@@ -162,7 +162,7 @@
+     def has_key(self,k): return k in self.attributes
+     #[setattr(self,method,lambda k,meth=method:getattr(self.attributes,meth)(k)) for method in ('__getitem__','__contains__','get','has_key')]
+     def __iter__(self): return self.attributes.__iter__()
+-    def iteritems(self): return iter(self.attributes.items())
++    def iteritems(self): return iter(list(self.attributes.items()))
+     def keys(self): return list(self.attributes.keys())
+     def values(self): return list(self.attributes.values())
+     def __len__(self): return len(list(self.attributes.keys()))
+@@ -192,7 +192,7 @@
+         if not extractor: extractor = self.get_extractor()
+         extractor.ping()
+         try:
+-            print('in Reader.__extractorCommand: calling HdbExtractor command %s(%s)'%(command,args))            
++            print(('in Reader.__extractorCommand: calling HdbExtractor command %s(%s)'%(command,args)))            
+             result = extractor.command_inout(*([command]+(args and [args] or [])))
+         except PyTango.DevFailed as e:
+             #e.args[0]['reason'],e.args[0]['desc'],e.args[0]['origin']
+@@ -205,7 +205,7 @@
+                 extractor.init()                
+                 raise Exception('Extractor_%s'%reason)
+             else:
+-                print(traceback.format_exc())
++                print((traceback.format_exc()))
+                 raise Exception('Reader__extractorCommand:Failed(%s)!'% str(e))
+         print('in Reader.__extractorCommand: command finished')
+         return result
+--- ./PyTangoArchiving/files.py	(original)
++++ ./PyTangoArchiving/files.py	(refactored)
+@@ -45,7 +45,7 @@
+ RESULT = {} # Last result of each test is stored for convenience
+ 
+ def GetConfigFiles(folder=ARCHIVING_CONFIGS,mask='.*.csv'):
+-    print('In GetConfigFiles(%s,%s)' % (folder,mask))
++    print(('In GetConfigFiles(%s,%s)' % (folder,mask)))
+     return sorted(['%s/%s'%(folder,f) for f in os.listdir(folder) if fun.matchCl(fun.toRegexp(mask),f)])
+ 
+ def getAPI(schema,dedicated=False):
+@@ -90,7 +90,7 @@
+     ###########################################################################
+     # Loading a list of schemas
+     if fun.isRegexp(schema):
+-        print('>>> %s is a regexp, Loading each matching schema separately'%schema)
++        print(('>>> %s is a regexp, Loading each matching schema separately'%schema))
+         for s in PyTangoArchiving.ArchivingAPI.SCHEMAS:
+             if not fun.matchCl(fun.toRegexp(schema),s): continue
+             else: RESULT[s]=LoadArchivingConfiguration(filename,s,launch,force,stop,dedicated,check,overwrite,centralized,failed,unavailable,hosts,api,filters,exclude)
+@@ -108,8 +108,8 @@
+     if 'stop' not in exclude.get('type','').lower(): 
+         exclude['type'] = exclude.get('type') and '(%s|%s)'%(exclude['type'],'stop') or 'stop'
+                 
+-    print('>>> In LoadArchivingConfiguration(%s,%s,launch=%s,dedicated=%s,force=%s,overwrite=%s,filters=%s,exclude=%s)'\
+-        %((filename,schema,launch,dedicated,force,overwrite,filters,exclude,)))
++    print(('>>> In LoadArchivingConfiguration(%s,%s,launch=%s,dedicated=%s,force=%s,overwrite=%s,filters=%s,exclude=%s)'\
++        %((filename,schema,launch,dedicated,force,overwrite,filters,exclude,))))
+     
+     if dedicated:
+         raise Exception('Launch DedicateArchiversFromConfiguration(config,schema,hosts,centralized) first!')
+@@ -117,14 +117,14 @@
+     
+     config = ParseCSV(filename,filters=filters,exclude=exclude) # Attributes not for this schema will be pruned    
+     n_all = len(config)
+-    print('>>> %d attributes read from %s file'%(len(config),filename))
++    print(('>>> %d attributes read from %s file'%(len(config),filename)))
+     api = api or getAPI(schema)
+     
+     if check:
+         print('>>> Pruning attributes not available ...')
+         unavailable.extend([attr for attr in config if not utils.check_attribute(attr,readable=False)])#True)])
+         if unavailable:
+-            print('\n%d attributes are not available!!!\n' % len(unavailable))
++            print(('\n%d attributes are not available!!!\n' % len(unavailable)))
+             if force: 
+                 [config.pop(att) for att in unavailable]
+             else: raise Exception('Attributes not available: %s'%fun.list2str(unavailable))    
+@@ -171,26 +171,26 @@
+         
+     ##Final Report
+     if unavailable: 
+-        print('Attributes not available: %s'%fun.list2str(unavailable))
++        print(('Attributes not available: %s'%fun.list2str(unavailable)))
+     if failed: 
+-        print('Attributes unable to start/stop archiving: %s' % fun.list2str(failed))
++        print(('Attributes unable to start/stop archiving: %s' % fun.list2str(failed)))
+         RESULT['FAILED'] = failed
+     #failed.extend(unavailable)
+     if not launch: 
+         print(('THE ARCHIVING OF THE ATTRIBUTES HAS NOT BEEN PROCESSED, EXECUTE LoadArchivingConfiguration(%s,launch=True) TO DO IT'%filename))
+     else: 
+-        print('-'*80)
++        print(('-'*80))
+         print(('%d attributes requested, %d have been introduced into archiving, %d failed, %d unavailable' %(n_all,n_all-len(unavailable)-len(failed),len(failed),len(unavailable))))
+         if archivers_to_restart:
+-            print('-'*80)
+-            print('Restarting %d archivers that have been modified ...'%len(archivers_to_restart))
++            print(('-'*80))
++            print(('Restarting %d archivers that have been modified ...'%len(archivers_to_restart)))
+             api.servers.stop_servers(archivers_to_restart)
+             time.sleep(5.)
+             api.servers.start_servers(archivers_to_restart)
+             print('DONE')
+-            print('-'*80)
+-    
+-    print('LoadArchivingConfiguration finished in %f minutes.' % ((time.time()-tstart)/60.))
++            print(('-'*80))
++    
++    print(('LoadArchivingConfiguration finished in %f minutes.' % ((time.time()-tstart)/60.)))
+     RESULT.update(modes)
+     return None if silent else RESULT
+     
+@@ -246,7 +246,7 @@
+         dev,attr = k.lower().rsplit('/',1)
+         if dev not in all_devs or fandango.check_device(dev) and attr not in list(map(str.lower,fandango.get_device(dev).get_attribute_list())):
+             if not force:
+-                print('%s attribute doesnt exist!'%k)
++                print(('%s attribute doesnt exist!'%k))
+                 return
+         else:
+             hosts[v['host'].lower().split('.')[0]].append(k.lower())
+@@ -270,11 +270,11 @@
+                 
+                 for host,vals in list(hosts.items()):
+                     servers = [s for s in all_servers if host.split('.')[0].lower() in s.lower()]
+-                    print('Restarting the Dedicated archiving servers in host %s: %s' % (host,servers))
++                    print(('Restarting the Dedicated archiving servers in host %s: %s' % (host,servers)))
+                     for server in servers:
+                         try:
+                             if api.servers[server].ping() is not None: api.servers.stop_servers(server)
+-                        except Exception as e: print('The server may be not running: %s'%str(e))
++                        except Exception as e: print(('The server may be not running: %s'%str(e)))
+                         print('waiting some seconds for stop_servers ...')
+                         time.sleep(10.)
+                     for server in servers:
+@@ -288,16 +288,16 @@
+                             if not force:
+                                 raise e
+                             else:
+-                                print('UNABLE TO RESTART %s'%server)
++                                print(('UNABLE TO RESTART %s'%server))
+                                 [[failed.append(a) for a in assigned.get(d,[]) if a not in failed] for d in api.servers[server].get_device_list()]
+                 time.sleep(10.)
+                 api.servers.start_servers(manager,wait=30.)
+                 print('waiting some seconds after ArchivingManager restart ...')
+                 time.sleep(10.)
+             else:
+-                print('!!! %sArchiver and ArchivingManager devices must be restarted to finish the setup !!!' % schema)
++                print(('!!! %sArchiver and ArchivingManager devices must be restarted to finish the setup !!!' % schema))
+         except Exception as e:
+-            print(traceback.format_exc())
++            print((traceback.format_exc()))
+             print('Dedicated Archiving failed! ... restarting the ArchivingManager')
+             if launch: api.servers.start_servers(manager,wait=60.)
+             raise Exception('Dedicated Archiving failed!')
+@@ -343,7 +343,7 @@
+         'triable':'missing attributes ready to be added',
+         'polizon':'attributes from same devices that are being archived but not declared in this file.',
+     """
+-    print("In CheckArchivingConfiguration(%s,restart=%s)" % ((filename,schema,period,filters,exclude),restart))
++    print(("In CheckArchivingConfiguration(%s,restart=%s)" % ((filename,schema,period,filters,exclude),restart)))
+     result,now = {},time.time()    
+     tload,t0 = 0,0
+     filters = fun.notNone(filters,{})
+@@ -365,7 +365,7 @@
+     STATS = defaultdict(list)
+     STATS['all'] = list(attributes.keys())
+     #ok,unavailable,late,missing,triable,diff,retried,lost,hung,dedicated = [],[],[],[],[],[],[],[],[],[]
+-    print("Checking %s attributes ..." % len(attributes))
++    print(("Checking %s attributes ..." % len(attributes)))
+     retriable = defaultdict(list)
+     valuable = []
+     for att,modes in list(attributes.items()):
+@@ -381,7 +381,7 @@
+             elif att in api: 
+                 #Was archived in the past
+                 STATS['lost'].append(att)
+-                print('%s is LOST, no archiver assigned!'%(att))
++                print(('%s is LOST, no archiver assigned!'%(att)))
+                 if restart:
+                     #Dedicated configuration is not done here!! ... this is just for restarting temporarily unavailable attributes
+                     retriable[utils.modes_to_string(api.check_modes(api.schema,modes))].append(att)
+@@ -392,13 +392,13 @@
+         except ModeCheckNotImplemented as e: 
+                 raise e
+         except Exception as e: 
+-                print('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e))
++                print(('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)))
+                 STATS['missing'].append(att)
+     
+     t0 = time.time()
+     all_values = api.load_last_values([t[0] for t in valuable],cache=period)
+     tload+=time.time()-t0
+-    print('\t%2.2f seconds loading values.'%tload)
++    print(('\t%2.2f seconds loading values.'%tload))
+     for att,modes,attIsNone in valuable:
+         try:
+             if api[att].dedicated: STATS['dedicated'].append(att)
+@@ -434,16 +434,16 @@
+         except ModeCheckNotImplemented as e: 
+                 raise e
+         except Exception as e: 
+-                print('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e))
++                print(('In CheckArchivingConfiguration(...): %s check failed!: %s' % (att,e)))
+                 STATS['missing'].append(att)
+                 
+     STATS['polizon'] = [a for a in api.attributes if a.rsplit('/',1)[0] in devices and api[a].archiver and a not in attributes]
+-    if STATS['polizon']: print('%d Attributes not in list but archived from same devices'%len(STATS['polizon']))
++    if STATS['polizon']: print(('%d Attributes not in list but archived from same devices'%len(STATS['polizon'])))
+     
+     summary = ', '.join(['%s:%s'%(k.upper(),len(v)) for k,v in sorted(STATS.items()) if v])
+     STATS = dict((k,sorted(l)) for k,l in list(STATS.items()))        
+     STATS['rate'] = (float(len(STATS['ok'])+len(STATS.get('unavailable')))/len(STATS['all'])) if (STATS.get('ok') and STATS.get('all')) else 0.
+-    print(('CheckArchivingConfiguration(%s,%s): attribute check in %2.2f seconds:'%(filename,schema,time.time()-now))+'\n\t'+summary)
++    print((('CheckArchivingConfiguration(%s,%s): attribute check in %2.2f seconds:'%(filename,schema,time.time()-now))+'\n\t'+summary))
+     
+     if restart and (idles or STATS.get('hung',[]) or retriable):
+         STATS['retried'] = []
+@@ -453,14 +453,14 @@
+         idles.extend([a for a,v in list(archivers.items()) if v<0 and a not in idles])
+         
+         if idles: 
+-            print('---> Restarting %d faulty archivers: %s' % (len(idles),idles))
++            print(('---> Restarting %d faulty archivers: %s' % (len(idles),idles)))
+             servers = list(set(api.servers.get_device_server(d) for d in idles))
+-            print('------> Restarting %d faulty servers: %s' % (len(servers),servers))
++            print(('------> Restarting %d faulty servers: %s' % (len(servers),servers)))
+             api.servers.kill_servers(servers)
+             time.sleep(5.)
+             api.servers.start_servers(list(set(api.servers.get_device_server(d) for d in idles)))
+             
+-            print('%s ---> Waiting for archivers to restart ...'%time.ctime())
++            print(('%s ---> Waiting for archivers to restart ...'%time.ctime()))
+             nn = time.time()
+             while time.time()<(nn+150):
+                 try: 
+@@ -475,10 +475,10 @@
+             if not api[att].archiver or api[att].archiver not in idles: #Adding not-idle attributes to retriable list
+                 modes = attributes[att]
+                 retriable[utils.modes_to_string(api.check_modes(api.schema,modes))].append(att)
+-        print('%s ---> Restarting %d archiving modes'%(time.ctime(),len(retriable)))
++        print(('%s ---> Restarting %d archiving modes'%(time.ctime(),len(retriable))))
+         
+         for modes,attrs in list(retriable.items()):
+-            print('%s ---> Restarting %s archiving for %d attributes' % (time.ctime(),modes,len(attrs)))
++            print(('%s ---> Restarting %s archiving for %d attributes' % (time.ctime(),modes,len(attrs))))
+             try: 
+                 modes = utils.modes_to_dict(modes)
+                 targets = [a for a in attrs if not api[a].archiver or api[a].archiver not in idles]
+@@ -486,9 +486,9 @@
+                     if not api.start_archiving(targets,modes,load=False):
+                         '--------> start_archiving(%s) failed with no exception'%targets
+                     STATS['retried'].extend(targets)
+-            except: print(traceback.format_exc())
+-
+-        print('%s: %s[%s] restart finished after %s seconds'%(time.ctime(),filename,len(STATS['retried']),time.time()-now))
++            except: print((traceback.format_exc()))
++
++        print(('%s: %s[%s] restart finished after %s seconds'%(time.ctime(),filename,len(STATS['retried']),time.time()-now)))
+         
+     return STATS
+    
+@@ -535,12 +535,12 @@
+         api.load_attribute_descriptions()
+         api.load_attribute_modes()    
+     config = ParseCSV(filename,schema=api.schema)
+-    print('In StopArchivingConfiguration(%s): %d attributes found' % (filename,len(config)))
++    print(('In StopArchivingConfiguration(%s): %d attributes found' % (filename,len(config))))
+     devices = set([c.rsplit('/',1)[0].lower() for c in config])
+     for dev in devices:
+         attrs = [a for a in api if a.startswith(dev) and api[a].archiver]
+         if attrs: api.stop_archiving(attrs,load=False)
+-        else: print('No attributes currently archived for %s' % dev)
++        else: print(('No attributes currently archived for %s' % dev))
+         time.sleep(3.)
+     api.load_all(values=False)
+     return
+@@ -626,7 +626,7 @@
+     """
+     path = folder+'/'+(filename or get_data_filename(var,data,format))
+     kwargs = kwargs or {'arrsep':' '}
+-    print('Saving %d registers to %s ...'%(len(data),path))
++    print(('Saving %d registers to %s ...'%(len(data),path)))
+     if format == 'csv':
+         text = PyTangoArchiving.Reader.export_to_text({var:data},**kwargs)
+         open(path,'w').write(text)
+@@ -693,7 +693,7 @@
+     # it returns the list of device names and the lines that matches for each
+     hosts=config.getAsTree(lastbranch='ArchivingMode')#config.get(head='Device',distinct=True)
+     if not hosts: 
+-        print('NO HOSTS FOUND IN %s!!!' % filename)
++        print(('NO HOSTS FOUND IN %s!!!' % filename))
+         return {}
+     
+     ## Parsing the params to create a Context
+@@ -775,7 +775,7 @@
+                 #print 'a,tipus:  %s,%s'%(a,tipus)
+                 if '@DEFAULT' not in a: continue
+                 if not tipus or not list(tipus.values())[0]: 
+-                    print('Wrong format assigning defaults for %s device' % dev)
++                    print(('Wrong format assigning defaults for %s device' % dev))
+                     continue
+                 for schema,modes in list(tipus.items()):
+                     trace('schema,modes: %s,%s'%(schema,modes))
+@@ -827,7 +827,7 @@
+                             try:
+                                 firstmode,firstparam=list(modes.keys())[0],list(mode_params.values())[0][0]
+                             except Exception as e:
+-                                print(attribute,modes,mode,mode_params)
++                                print((attribute,modes,mode,mode_params))
+                                 raise e
+                             if any(a.startswith('@') for a in [attribute,firstmode,tipus]):
+                                     if attribute=='@DEDICATED':
+@@ -844,7 +844,7 @@
+                                         if mode in archmodes:
+                                                 mode=archmodes[mode]
+                                         elif mode not in list(archmodes.values()):
+-                                                print('Unknown mode!: ',mode)
++                                                print(('Unknown mode!: ',mode))
+                                                 continue
+                                         params = [float(p) for p in params if p]
+                                         if params: params[0] = 1000.*params[0] #Converting periods from seconds to milliseconds
+@@ -865,7 +865,7 @@
+         for attribute in keys:
+             if ( ('name' in filters and not fun.matchCl(fun.toRegexp(filters['name']),attribute)) or
+                  ('name' in exclude and fun.matchCl(fun.toRegexp(exclude['name']),attribute)) ):
+-                print('%s filtered by %s'%(attribute,filters))
++                print(('%s filtered by %s'%(attribute,filters)))
+                 pops.append(attribute)
+             else:
+                 modes = list(attrslist[attribute].keys())
+@@ -977,7 +977,7 @@
+         fc.appendChild(createAttributeNode(newdoc,attribute,modes))
+         fc.appendChild(newdoc.createTextNode('\n'))
+         
+-    print(newdoc.toxml())
++    print((newdoc.toxml()))
+     return newdoc
+ 
+ def readArchivingConfigurationFromDB(htype='hdb'):
+@@ -1087,5 +1087,5 @@
+         
+ 
+ if __name__ == '__main__':
+-    print(sys.argv)
++    print((sys.argv))
+     main(sys.argv[1:])
+--- ./PyTangoArchiving/dbs.py	(original)
++++ ./PyTangoArchiving/dbs.py	(refactored)
+@@ -243,7 +243,7 @@
+                 else:
+                     query += "`read_value` " + stype + " default NULL, "+"`write_value` " + stype + " default NULL"
+                 query += ") ENGINE = MyIsam" #CRITICAL!!!
+-                print('Creating %s: %s'%(a,query))
++                print(('Creating %s: %s'%(a,query)))
+                 self.Query(query)
+                 done[a]=query
+         return list(done.keys())
+@@ -255,14 +255,14 @@
+         try: 
+             self.db.Query("DELETE FROM amt WHERE stop_date IS NOT NULL AND stop_date < '%s'"%date)
+         except Exception as e: 
+-            print('ArchivingDB(%s).clean_attribute_modes(%s) failed!: %s'%(self.db_name,date,e))
++            print(('ArchivingDB(%s).clean_attribute_modes(%s) failed!: %s'%(self.db_name,date,e)))
+             return False
+         return True
+     
+     def get_table_updates(self,name=''):
+         if name and not str(name).startswith('att_'):
+             n = self.get_table_name(name if isinstance(name,int) else self.get_attribute_ID(name))
+-            print('%s => %s'  % (name,n))
++            print(('%s => %s'  % (name,n)))
+             name = n
+         q = 'select table_name,update_time from information_schema.tables where table_schema like "%s"'%self.db_name
+         if name: q+=" and table_name like '%s'"%name
+--- ./PyTangoArchiving/widget/snaps/snapdialogs.py	(original)
++++ ./PyTangoArchiving/widget/snaps/snapdialogs.py	(refactored)
+@@ -78,7 +78,7 @@
+         TaurusLauncherButton.__init__(self, parent = parent, designMode = designMode, widget = TaurusValuesTable(), icon=':/designer/table.png', text = 'Show snap')
+         
+     def setValue(self, value, dimy=1):
+-        print('ShowSpectrumButton(%s).setValue(%s)'%(self.modelName,value))
++        print(('ShowSpectrumButton(%s).setValue(%s)'%(self.modelName,value)))
+         self._value = value
+         try:
+             self._widget = getattr(self,'_widget',None) or self.widget()
+@@ -107,7 +107,7 @@
+                             tiod.setModelData(te,tm,ti)
+                         tiod.emit(Qt.SIGNAL('commitData'),te)
+         except:
+-            print('URG!: %s: TaurusLauncherButton has no _widget!?'%time.ctime())
++            print(('URG!: %s: TaurusLauncherButton has no _widget!?'%time.ctime()))
+             traceback.print_exc()
+          
+     def getValue(self):
+@@ -223,8 +223,8 @@
+                 self._operations = [operation]
+         except:
+             self._operations = []
+-            print('!'*80+'\n'+'updatePendingOperations(%s)'%model)
+-            print(traceback.format_exc())
++            print(('!'*80+'\n'+'updatePendingOperations(%s)'%model))
++            print((traceback.format_exc()))
+         self.updateStyle()
+ #    
+ 
+@@ -329,7 +329,7 @@
+     def fillWithChildren(self):
+         """Overwrites super method. For writable attributes create a special Taurus value,
+         with additional check box for choosing to 'load/not load' snap value."""
+-        print('LoadForm.fillWithChildren(%s)'%str(self.getModel())[:80])
++        print(('LoadForm.fillWithChildren(%s)'%str(self.getModel())[:80]))
+         frame = TaurusWidget()
+         frame.setLayout(Qt.QGridLayout())
+         models = self.getModel()              
+@@ -358,7 +358,7 @@
+         """
+         damagedAttr = []
+         from taurus.core import AttributeNameValidator
+-        print('LoadForm.loadValues([%d])'%len(list(attrVal.keys())))
++        print(('LoadForm.loadValues([%d])'%len(list(attrVal.keys()))))
+         option,ok = Qt.QInputDialog.getItem(self,'Load Values',
+           ('Choose values to load:\n(attribute,(read value,write value))\n\n'+
+           '\n'.join(map(str,list(attrVal.items()))))[:512],
+@@ -388,8 +388,8 @@
+                         damagedAttr.append(m)
+                         traceback.print_exc()
+                 else:
+-                    print('%s not in snapshot values'%m)
+-        print('%d worked, %d failed'%(len(self.scrollArea.widget().children()),len(damagedAttr)))
++                    print(('%s not in snapshot values'%m))
++        print(('%d worked, %d failed'%(len(self.scrollArea.widget().children()),len(damagedAttr))))
+         if len(damagedAttr) > 0:
+             Qt.QMessageBox.warning(self,"Could not load all the values from snapshot",
+                                     "Could not load all the values from snapshot<br>" +
+@@ -493,8 +493,8 @@
+             
+ class LoadValuesWidget(Qt.QWidget):
+     def __init__(self, parent=None, sorter=None):
+-        print('#'*80)
+-        print(':: LoadValuesWidget(%s,%s)'%(parent,sorter))
++        print(('#'*80))
++        print((':: LoadValuesWidget(%s,%s)'%(parent,sorter)))
+         Qt.QWidget.__init__(self, parent)
+         self.setLayout(Qt.QGridLayout())   
+         selectAllLabel = Qt.QLabel("<b>Select attributes to be loaded:</b>")
+@@ -513,8 +513,8 @@
+         self.form.setModel(model)
+         
+     def loadValues(self, attrVal):
+-        print('#'*80)
+-        print('LoadValuesWidget.loadValues([%d])'%len(attrVal))
++        print(('#'*80))
++        print(('LoadValuesWidget.loadValues([%d])'%len(attrVal)))
+         ok = self.form.loadValues(attrVal)
+         if not ok:
+             self.hide()
+@@ -531,7 +531,7 @@
+         self.form.checkAll(state)
+         
+     def onApply(self):
+-        print('#'*80)
++        print(('#'*80))
+         print('LoadValuesWidget.onApply()')
+         self.emit(Qt.SIGNAL("loaded"))
+         
+@@ -621,7 +621,7 @@
+             else:
+                 self.snapapi = SnapAPI('%s@%s' % (credentials[0], credentials[1]), credentials[2])
+         except:
+-            print(traceback.format_exc())
++            print((traceback.format_exc()))
+             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
+                                     "Could not establish connection to SnapManager DS.<br>" + \
+                                     "Please check if DS is running or if credentials are correct.")
+--- ./PyTangoArchiving/widget/snaps/snaps.py	(original)
++++ ./PyTangoArchiving/widget/snaps/snaps.py	(refactored)
+@@ -56,8 +56,8 @@
+     try:
+         return TYPE(V)
+     except Exception as e:
+-        print('%s(%s) Failed!!'%(TYPE,str(V)[:80]))
+-        print(traceback.format_exc())
++        print(('%s(%s) Failed!!'%(TYPE,str(V)[:80])))
++        print((traceback.format_exc()))
+         return 0
+     
+ def get_as_int(item):
+@@ -125,7 +125,7 @@
+                 attributes.append(str(self.ui.final_List.item(i).text()))
+             self.snapapi.create_context(str(self.ui.line_author.text()),str(self.ui.line_name.text()),str(self.ui.line_reason.text()),str(self.ui.line_description.text()),attributes)
+         except Exception:
+-            print(traceback.format_exc())
++            print((traceback.format_exc()))
+             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
+                                     "Could not create new context.<br>" + \
+                                     "Was not possible to talk with SnapManager DS.<br>" + \
+@@ -138,7 +138,7 @@
+         Qt.QMessageBox.information(self,"Context","Context created succesfully!")
+ 
+     def modifyContext(self, cid):
+-        print('In modifyContext(%s)'%cid)
++        print(('In modifyContext(%s)'%cid))
+         try:
+             attributes=[]
+             for i in range(self.ui.final_List.count()):
+@@ -153,7 +153,7 @@
+             self.snapapi.modify_context(cid,self.ctx.author,self.ctx.name,
+                 self.ctx.reason,self.ctx.description,attributes)
+         except Exception:
+-            print(traceback.format_exc())
++            print((traceback.format_exc()))
+             Qt.QMessageBox.critical(self,"Tango Archiving Problem",
+                                     "Could not modify context.<br>" + \
+                                     "Was not possible to talk with SnapManager DS.<br>" + \
+@@ -355,7 +355,7 @@
+     def onRefreshPressed(self):
+         fkey = str(self.filterComboBox.currentText())
+         fvalue = str(self.filterComboBox2.currentText())
+-        print('onRefreshPressed(%s,%s)'%(fkey,fvalue))
++        print(('onRefreshPressed(%s,%s)'%(fkey,fvalue)))
+         try:
+             self.listWidget.blockSignals(True)
+             self.listWidget.clear()
+@@ -405,8 +405,8 @@
+     def onContextChanged(self, idx=None):
+         try:
+             cid = self.getCurrentContext(idx)
+-            print("onContextChanged(%s,(%s,%s,%s))"%(cid,self.filterComboBox.currentText(),
+-                self.filterComboBox2.currentText(),self.contextComboBox.currentText()))
++            print(("onContextChanged(%s,(%s,%s,%s))"%(cid,self.filterComboBox.currentText(),
++                self.filterComboBox2.currentText(),self.contextComboBox.currentText())))
+             try:
+                 self.context=self.snapapi.get_context(cid)
+             except:
+@@ -427,9 +427,9 @@
+             if self.defaultContextID(): self.defaultContextLabel.setText("<b>%s</b> [%d]" % (self.context.name, self.context.ID))
+             
+             self.listWidget.clear()
+-            print("onContextChanged(%s): get_snapshots()"%(cid))
++            print(("onContextChanged(%s): get_snapshots()"%(cid)))
+             self.snapshots=self.context.get_snapshots()
+-            print('[%d]'%len(self.snapshots))
++            print(('[%d]'%len(self.snapshots)))
+             for id,snapshot in list(self.snapshots.items()):
+                 item=Qt.QListWidgetItem()
+                 item.setText("%s - %s [ID: %d]" % (snapshot[0], snapshot[1].split('\n')[0], id))
+@@ -473,7 +473,7 @@
+             if not attributes:
+                 Qt.QMessageBox.warning(self,"Empty snapshot", "This snapshot appears to have no contents.")
+             try:
+-                print("onSnapshotChanged(%s)"%(id))
++                print(("onSnapshotChanged(%s)"%(id)))
+                 self.taurusForm.setModel([])
+                 self.buildTable(self.attributes)
+                 self.tableView()
+@@ -488,7 +488,7 @@
+                 self.viewComboBox.setCurrentIndex(0)
+                 self.buildSnap2Box(id)
+             except:
+-                print(traceback.format_exc())
++                print((traceback.format_exc()))
+         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())
+ 
+     def buildSnap2Box(self, sid):
+@@ -541,7 +541,7 @@
+                 if (x,y) == (1,1):
+                     vals.append((name,rv1,wv1,rv2,wv2))
+                 else:
+-                    print(x,y)
++                    print((x,y))
+                     print(rv1)
+                     rv1,wv1 = str(rv1).split(','),str(wv1).split(',')
+                     if y!=1: rv2,wv2 = [v for w in rv2 for v in w],[v for w in wv2 for v in w]
+@@ -638,7 +638,7 @@
+ 
+     def onLoadPressed(self):
+         try:
+-            print('%s: onLoadPressed()'%time.ctime())
++            print(('%s: onLoadPressed()'%time.ctime()))
+             sid = get_item_id(self.listWidget.currentItem())
+             self.loadSnapshot(sid)
+         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())
+@@ -651,7 +651,7 @@
+             sid = self.getCurrentSnap()
+             qd = Qt.QDialog()
+             qd.setWindowTitle('Edit Snap Comment')
+-            print(str(self.snapshots[sid][1]))
++            print((str(self.snapshots[sid][1])))
+             qtt = Qt.QTextEdit()
+             qtt.setPlainText(str(self.snapshots[sid][1]))
+             qbb = Qt.QDialogButtonBox(qd)
+@@ -671,7 +671,7 @@
+         
+     def onImportPressed(self):
+         try:
+-            print('%s: onImportPressed()'%time.ctime())
++            print(('%s: onImportPressed()'%time.ctime()))
+             self.loadFromFile(str(Qt.QFileDialog.getOpenFileName(self,'Load CSV File')))
+         except: Qt.QMessageBox.warning(self,"Error",traceback.format_exc())   
+         
+@@ -739,7 +739,7 @@
+         
+     def loadSnapshot(self, sid):
+         try:
+-            print('%s: loadSnapshot(%s)'%(time.ctime(),sid))
++            print(('%s: loadSnapshot(%s)'%(time.ctime(),sid)))
+             attrs = [attr['full_name'] for attr in list(self.context.get_attributes().values()) if 'WRITE' in str(attr['writable'])]
+             snapshot=self.context.get_snapshot(sid)
+             from .snapdialogs import LoadValuesWidget
+@@ -758,7 +758,7 @@
+             fandango.qt.QExceptionMessage(traceback.format_exc())
+             
+     def loadFromFile(self, filename):
+-        print('%s: loadFromFile(%s)'%(time.ctime(),filename))
++        print(('%s: loadFromFile(%s)'%(time.ctime(),filename)))
+         if not str(filename.strip()): return
+         try:
+             import PyTangoArchiving.files
+--- ./PyTangoArchiving/widget/ArchivingBrowser.py	(original)
++++ ./PyTangoArchiving/widget/ArchivingBrowser.py	(refactored)
+@@ -62,7 +62,7 @@
+ def launch(script,args=[]):
+     import os
+     f = '%s %s &'%(script,' '.join(args))
+-    print('launch(%s)'%f)
++    print(('launch(%s)'%f))
+     os.system(f)
+ 
+ from fandango.qt import QGridTable, QDictToolBar
+@@ -238,7 +238,7 @@
+                     else:
+                         tv.setModel(model)
+                 except: 
+-                    print(traceback.format_exc())
++                    print((traceback.format_exc()))
+                 self.models.append(tv)
+                 #print('...')
+             #self.widgetbuffer.extend([qf,self.itemAt(i+self.offset,1),self.itemAt(i+self.offset,2),self.itemAt(i+self.offset,3),self.itemAt(i+self.offset,4)])
+@@ -502,7 +502,7 @@
+             self.toppan.layout().addWidget(self.header)
+         
+         if USE_SCROLL:
+-            print('*'*30 + ' USE_SCROLL=True '+'*'*30)
++            print(('*'*30 + ' USE_SCROLL=True '+'*'*30))
+             self._scroll = MyScrollArea(self.toppan)#Qt.QScrollArea(self)
+             self._background = AttributesPanel(self._scroll) #At least a panel should be kept (never deleted) in background to not crash the worker!
+             self.panel = None
+--- ./PyTangoArchiving/widget/history.py	(original)
++++ ./PyTangoArchiving/widget/history.py	(refactored)
+@@ -88,7 +88,7 @@
+   @staticmethod
+   def setup_table(attribute,start,stop,values):
+   
+-      print('drawing table from %d values: %s ...' %( len(values),values[:2]))
++      print(('drawing table from %d values: %s ...' %( len(values),values[:2])))
+       twi = Qt.QWidget()
+       twi.setLayout(Qt.QVBoxLayout())
+       tab = Qt.QTableWidget()
+@@ -142,7 +142,7 @@
+ 
+       schemas = rd.is_attribute_archived(attribute,preferent=False)
+       if schemas:
+-          print('%s is being archived' % attribute)
++          print(('%s is being archived' % attribute))
+           di = Qt.QDialog(parent)
+           wi = di #QtGui.QWidget(di)
+           wi.setLayout(Qt.QGridLayout())
+@@ -192,7 +192,7 @@
+                           return check_values()
+                       else:
+                           print('getting values ...')
+-                          print('using %s reader' % rd.schema)
++                          print(('using %s reader' % rd.schema))
+                           values = rd.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
+                           if not len(values) and schema=='*' and hdb.is_attribute_archived(attribute,active=True):
+                               print('tdb failed, retrying with hdb')
+@@ -200,7 +200,7 @@
+                           if vf:
+                               values = fandango.arrays.decimate_array(values)
+                           if tf:
+-                              print('Filtering %d values (1/%dT)'%(len(values),tf))
++                              print(('Filtering %d values (1/%dT)'%(len(values),tf)))
+                               values = fandango.arrays.filter_array(values,window=tf) #,begin=start,end=stop)
+ 
+                           twi = klass.setup_table(attribute,start,stop,values)
+@@ -254,7 +254,7 @@
+                           print('show_history done ...')
+                           return twi
+                   except Exception as e:
+-                      print(traceback.format_exc())
++                      print((traceback.format_exc()))
+                       Qt.QMessageBox.warning(None, "Warning" , "Unable to retrieve the values (%s), sorry"%e)
+               else:
+                   print('dialog closed')
+--- ./PyTangoArchiving/widget/tdbwidget.py	(original)
++++ ./PyTangoArchiving/widget/tdbwidget.py	(refactored)
+@@ -82,7 +82,7 @@
+         attribute = attribute.lower()
+ 
+         if attribute in hdb.get_attributes() or attribute in tdb.get_attributes():
+-            print('%s is being archived' % attribute)
++            print(('%s is being archived' % attribute))
+             di = Qt.QDialog()
+             wi = di #QtGui.QWidget(di)
+             wi.setLayout(Qt.QGridLayout())
+@@ -113,12 +113,12 @@
+                     else:
+                         print('getting values ...')
+                         reader = tdb if str2epoch(start)>(time.time()-5*24*3600.) and attribute in tdb.get_attributes() else hdb
+-                        print('using %s reader' % reader.schema)
++                        print(('using %s reader' % reader.schema))
+                         values = reader.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
+                         if not len(values) and reader is tdb and attribute in hdb.get_attributes():
+                             print('tdb failed, retrying with hdb')
+                             values = hdb.get_attribute_values(attribute,str2epoch(start),str2epoch(stop))
+-                        print('drawing table from %d values' % len(values))
++                        print(('drawing table from %d values' % len(values)))
+                         tab = Qt.QTableWidget()
+                         tab.setWindowTitle('%s: %s to %s' % (attribute,start,stop))
+                         tab.setRowCount(len(values))
+--- ./PyTangoArchiving/widget/trend.py	(original)
++++ ./PyTangoArchiving/widget/trend.py	(refactored)
+@@ -61,8 +61,8 @@
+     elif any(fandango.matchCl(p,platform.node()) for p in prop):
+         USE_MULTIPROCESS=True
+ except:
+-    print(traceback.format_exc())
+-print('Multiprocess:%s'%USE_MULTIPROCESS)
++    print((traceback.format_exc()))
++print(('Multiprocess:%s'%USE_MULTIPROCESS))
+ 
+ #################################################################################################
+ # Methods for enabling archiving values in TauTrends
+@@ -187,7 +187,7 @@
+   
+     def __init__(self, parent = None, designMode = False):
+       actions = [a[1] for a in MenuActionAppender.ACTIONS]
+-      print('>'*80+'\n'+str(MenuActionAppender.ACTIONS))
++      print(('>'*80+'\n'+str(MenuActionAppender.ACTIONS)))
+       TaurusTrend.__init__(self,parent,designMode)
+       self.resetDefaultCurvesTitle()
+       self.setXDynScale(True)
+@@ -436,7 +436,7 @@
+         pickedIndex=None
+         self.curves_lock.acquire()
+         try:
+-            if targetCurveNames is None: targetCurveNames = iter(self.curves.keys())
++            if targetCurveNames is None: targetCurveNames = iter(list(self.curves.keys()))
+             for name in targetCurveNames:
+                 curve = self.curves.get(name, None)
+                 if curve is None: self.error("Curve '%s' not found"%name)
+@@ -683,7 +683,7 @@
+         self.warning('CheckBuffers(%s)'%str(list(self.trend.trendSets.keys())))
+         self.trend.doReplot()
+         self.show_dialog(not self.dialog()._checked)
+-        for n,ts in self.trend.trendSets.items():
++        for n,ts in list(self.trend.trendSets.items()):
+             try:
+                 model = ts.getModel()
+                 if model in self.last_args: self.last_args[model][-1] = 0
+@@ -703,7 +703,7 @@
+             rd.last_dates.clear()
+           except:
+             self.debug('unable to clear %s buffers'%rd)
+-        for n,ts in self.trend.trendSets.items():
++        for n,ts in list(self.trend.trendSets.items()):
+             ts.clearTrends(replot=True)
+             #self._xBuffer.moveLeft(self._xBuffer.maxSize())
+             #self._yBuffer.moveLeft(self._yBuffer.maxSize())
+@@ -867,7 +867,7 @@
+         except: 
+             try: model = model.getModelName()
+             except Exception as e:
+-                print(e+'\n'+'getArchivedTrendValues():model(%s).getModelName() failed\, using str(model)'%model)
++                print((e+'\n'+'getArchivedTrendValues():model(%s).getModelName() failed\, using str(model)'%model))
+                 model = str(model)
+     if '{' not in model: #Excluding "eval-like" models
+         params = utils.parse_tango_model(model)
+@@ -1056,7 +1056,7 @@
+     import functools
+     for i,t in enumerate(QT_CONNECTIONS[signal][:]):
+         if t[0]==qobj:
+-            print('disconnecting(%s,%s,%s)'%(qobj,signal,t[1]))
++            print(('disconnecting(%s,%s,%s)'%(qobj,signal,t[1])))
+             qobj.disconnect(qobj,Qt.SIGNAL(signal),t[1])
+             #qobj.disconnect(qobj,Qt.SIGNAL(signal),0,0)
+             QT_CONNECTIONS[signal].remove(t)
+@@ -1338,8 +1338,8 @@
+           tt1.setModel(models)
+           tt1.setWindowTitle(str(models))
+     except:
+-        print('Exception in set_pressure_trend(%s)'%tt)
+-        print(traceback.format_exc())
++        print(('Exception in set_pressure_trend(%s)'%tt))
++        print((traceback.format_exc()))
+     if show and n_trends>1: qw.show()
+     return qw if n_trends>1 else tt1
+         
+--- ./PyTangoArchiving/servers/PyArchivingWatcher/PyArchivingWatcher.py	(original)
++++ ./PyTangoArchiving/servers/PyArchivingWatcher/PyArchivingWatcher.py	(refactored)
+@@ -77,14 +77,14 @@
+ #    Device destructor
+ #------------------------------------------------------------------
+     def delete_device(self):
+-        print("[Device delete_device method] for device",self.get_name())
++        print(("[Device delete_device method] for device",self.get_name()))
+ 
+ 
+ #------------------------------------------------------------------
+ #    Device initialization
+ #------------------------------------------------------------------
+     def init_device(self):
+-        print("In ", self.get_name(), "::init_device()")
++        print(("In ", self.get_name(), "::init_device()"))
+         self.set_state(PyTango.DevState.ON)
+         self.get_device_properties(self.get_device_class())
+         
+@@ -133,8 +133,8 @@
+         else:
+             self.configs = sorted(files.GetConfigFiles())
+         
+-        print('#'*80)
+-        print('%s, In archiving_report.py: reading %s, generating %s' % (time.ctime(),self.configs or self.domreg,self.HtmlFile))
++        print(('#'*80))
++        print(('%s, In archiving_report.py: reading %s, generating %s' % (time.ctime(),self.configs or self.domreg,self.HtmlFile)))
+         self.cron = fandango.threads.CronTab(self.CronTab,task=self.CheckAll,start=True,process=True,keep=10,trace=True)
+                         
+ 
+@@ -142,7 +142,7 @@
+ #    Always excuted hook method
+ #------------------------------------------------------------------
+     def always_executed_hook(self):
+-        print("In ", self.get_name(), "::always_excuted_hook()")
++        print(("In ", self.get_name(), "::always_excuted_hook()"))
+         
+         try:
+             while True:
+@@ -152,7 +152,7 @@
+                 try:
+                     self.results[result[0]] = result[1]
+                 except:
+-                    print('Exception in always_executed_hook(): queue.get(): \n%s'%traceback.format_exc())
++                    print(('Exception in always_executed_hook(): queue.get(): \n%s'%traceback.format_exc()))
+         except: pass
+             
+ 
+@@ -165,7 +165,7 @@
+ #    Read Attribute Hardware
+ #------------------------------------------------------------------
+     def read_attr_hardware(self,data):
+-        print("In ", self.get_name(), "::read_attr_hardware()")
++        print(("In ", self.get_name(), "::read_attr_hardware()"))
+ 
+ 
+ 
+@@ -184,7 +184,7 @@
+ #    argout: DevString    
+ #------------------------------------------------------------------
+     def CheckFile(self, argin):
+-        print("In ", self.get_name(), "::CheckFile()")
++        print(("In ", self.get_name(), "::CheckFile()"))
+         #    Add your own code here
+         
+         return argout
+@@ -197,7 +197,7 @@
+ #    argout: DevString    
+ #------------------------------------------------------------------
+     def CheckAll(self, argin=None):
+-        print("In ", self.get_name(), "::CheckAll()")
++        print(("In ", self.get_name(), "::CheckAll()"))
+         #    Add your own code here
+         
+         confis,domreg,argfilters,argexclude = self.configs,self.domreg,self.argfilters,self.argexclude
+@@ -208,14 +208,14 @@
+         polizons = {}
+ 
+         for schema in ('hdb','tdb'):
+-            print('Checking %s configurations' % schema.upper())
++            print(('Checking %s configurations' % schema.upper()))
+         
+             api = PyTangoArchiving.ArchivingAPI(schema,load=True)    
+             active = [a for a in api if api[a].archiver]
+             if not active: #No attributes being archived in the database
+                 continue
+             dedicated = list(set([a for a in active if api[a].dedicated]))
+-            print('There are %d dedicated attributes' % (len(dedicated)))
++            print(('There are %d dedicated attributes' % (len(dedicated))))
+             
+             #Initializing variables
+             results[schema] = {}
+@@ -235,8 +235,8 @@
+                     filters = dict(list(argfilters.items()))
+                     exclude = dict(list(argexclude.items()))
+                     try:
+-                        print('%s: Checking file %s' % (schema.upper(),c.split('/')[-1]))
+-                        print('filters: %s ; exclude: %s' % (filters,exclude))
++                        print(('%s: Checking file %s' % (schema.upper(),c.split('/')[-1])))
++                        print(('filters: %s ; exclude: %s' % (filters,exclude)))
+                         
+                         check = files.CheckArchivingConfiguration(
+                             c,
+@@ -258,7 +258,7 @@
+                     except Exception as e:
+                         if c in results[schema]: results[schema].pop(c)
+                         failed['%s:%s'%(schema,c)] = traceback.format_exc()
+-                        print(failed['%s:%s'%(schema,c)])
++                        print((failed['%s:%s'%(schema,c)]))
+                                         
+             ############################################################################
+             #Doing a generic check of the archiving, ignoring configurations
+@@ -269,7 +269,7 @@
+                 
+                 print(('Checking %s attributes by domain(%s): %s'%(schema,domreg,[(k,len(v)) for k,v in list(domains.items())])))
+                 for d,attributes in list(domains.items()):
+-                    print('%d attributes in domain %s' % (len(attributes),d))
++                    print(('%d attributes in domain %s' % (len(attributes),d)))
+                     ok,lost,goods,bads,retried = [],[],[],[],[]
+                     try:            
+                         [(goods if utils.check_attribute(a,readable=True) else bads).append(a) for a in attributes]
+@@ -277,12 +277,12 @@
+                             continue
+                         if goods: 
+                             [(lost if v else ok).append(a) for k,v in list(api.check_attributes_errors(goods,hours=1,lazy=True).items())]
+-                        print('%d attributes on time'%len(ok))
++                        print(('%d attributes on time'%len(ok)))
+                         if restart and lost:
+                             for att in lost:
+                                 modes = api[att].modes
+                                 if not modes: continue
+-                                print('Restarting archiving for %s' % att)
++                                print(('Restarting archiving for %s' % att))
+                                 if api.start_archiving([att],modes,load=False):
+                                     retried.append(att)                  
+                             
+@@ -293,7 +293,7 @@
+                     except Exception as e:
+                         if d in results[schema]: results[schema].pop(d)
+                         failed['%s:%s'%(schema,d)] = traceback.format_exc()
+-                        print(failed['%s:%s'%(schema,d)])                
++                        print((failed['%s:%s'%(schema,d)]))                
+         
+         return str(results) 
+ 
+@@ -305,7 +305,7 @@
+ #   argout: DevString   
+ #------------------------------------------------------------------
+     def GenerateHtml(self, argin):
+-        print("In ", self.get_name(), "::GenerateHtml()")
++        print(("In ", self.get_name(), "::GenerateHtml()"))
+         #   Add your own code here
+         
+         return argout
+@@ -397,6 +397,6 @@
+         U.server_run()
+ 
+     except PyTango.DevFailed as e:
+-        print('-------> Received a DevFailed exception:',e)
++        print(('-------> Received a DevFailed exception:',e))
+     except Exception as e:
+-        print('-------> An unforeseen exception occured....',e)
++        print(('-------> An unforeseen exception occured....',e))
+--- ./PyTangoArchiving/servers/PyExtractor/PyExtractor.py	(original)
++++ ./PyTangoArchiving/servers/PyExtractor/PyExtractor.py	(refactored)
+@@ -93,7 +93,7 @@
+         #attr.set_value(1.0)
+         aname,values = attr.get_name(),[]
+         attribute = self.tag2attr(aname)
+-        print(time.ctime()+'In read_dyn_attr(%s)'%aname)
++        print((time.ctime()+'In read_dyn_attr(%s)'%aname))
+ 
+         try:
+             req,atformat,attype,data = self.AttrData[attribute]
+@@ -111,7 +111,7 @@
+                 values = [conv(v[1] or 0.) for v in data]
+             else:
+                 values = [list(map(conv,v[1])) for v in data]
+-            if values: print(time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1]))
++            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+             else: print('\tno values')
+             attr.set_value(values,len(values))
+             
+@@ -120,19 +120,19 @@
+                 values = [conv(v[2] or 0.) for v in data]
+             else:
+                 values = [list(map(conv,v[2])) for v in data]
+-            if values: print(time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1]))
++            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+             else: print('\tno values')
+             attr.set_value(values,len(values))
+             
+         elif aname.endswith('_t'): 
+             values = [float(v[0] or 0.) for v in data]
+-            if values: print(time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1]))
++            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+             else: print('\tno values')
+             attr.set_value(values,len(values))
+             
+         elif aname.endswith('_d'): 
+             values = [fn.time2str(float(v[0] or 0.)) for v in data]
+-            if values: print(time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1]))
++            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+             else: print('\tno values')
+             attr.set_value(values,len(values))            
+             
+@@ -148,11 +148,11 @@
+               else:
+                 values = [[d[0]]+list(map(conv,d[1])) for d in data]
+               
+-            if values: print(time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1]))
++            if values: print((time.ctime()+'In read_dyn_attr(%s): %s[%d]:%s...%s'%(aname,type(values[0]),len(values),values[0],values[-1])))
+             else: print('\tno values')
+             attr.set_value(values,len(values))
+             
+-        print('\treturned %d values'%len(values))
++        print(('\treturned %d values'%len(values)))
+         
+     def is_dyn_attr_allowed(self,attr,req_type=None):
+         return True #self.IsDataReady(attr.name)
+@@ -218,7 +218,7 @@
+ #    Device destructor
+ #------------------------------------------------------------------
+     def delete_device(self):
+-        print(time.ctime()+"[Device delete_device method] for device",self.get_name())
++        print((time.ctime()+"[Device delete_device method] for device",self.get_name()))
+         self.reader.stop()
+         #del self.reader
+         print('Waiting 10 seconds')
+@@ -229,7 +229,7 @@
+ #    Device initialization
+ #------------------------------------------------------------------
+     def init_device(self):
+-        print(time.ctime()+"In ", self.get_name(), "::init_device()")
++        print((time.ctime()+"In ", self.get_name(), "::init_device()"))
+         self.set_state(PyTango.DevState.ON)
+         self.get_device_properties(self.get_device_class())
+         if not self.reader: self.reader = PyTangoArchiving.reader.ReaderProcess(self.DbSchema)
+@@ -277,7 +277,7 @@
+         
+         Data returned will be (rows,[t0,v0,t1,v1,t2,v2,...])
+         """
+-        print(time.ctime()+"In ", self.get_name(), "::GetAttDataBetweenDates(%s)"%argin)
++        print((time.ctime()+"In ", self.get_name(), "::GetAttDataBetweenDates(%s)"%argin))
+         #    Add your own code here
+         size = 0
+         aname = argin[0]
+@@ -292,7 +292,7 @@
+         argout = [fn.shape(attrs),[a for a in attrs]]
+         
+         if not synch:
+-          print('\t%s'%argout)
++          print(('\t%s'%argout))
+           return argout
+       
+         else:
+@@ -309,7 +309,7 @@
+         return [n+'/'+a+s for s in ('','_r','_t')] 
+ 
+     def RemoveCachedAttribute(self, argin):
+-        print(time.ctime()+"In ", self.get_name(), "::RemoveCachedAttribute(%s)"%argin)
++        print((time.ctime()+"In ", self.get_name(), "::RemoveCachedAttribute(%s)"%argin))
+         #    Add your own code here
+         argin = self.tag2attr(argin)
+         if argin in self.AttrData:
+@@ -322,9 +322,9 @@
+             try:
+                 attrlist = self.get_device_attr().get_attribute_list()
+                 attrlist = [a.get_name().lower() for a in attrlist]
+-                print('Attributelist: %s'%[str(a) for a in attrlist])
++                print(('Attributelist: %s'%[str(a) for a in attrlist]))
+             except:
+-                print(traceback.format_exc())
++                print((traceback.format_exc()))
+             aname = argin.replace('/','__').lower()
+             for s in ('','_r','_t',''):#,'_w'):
+                 try:
+@@ -337,27 +337,27 @@
+         return
+ 
+     def RemoveCachedAttributes(self):
+-        print("In ", self.get_name(), "::RemoveCachedAttributes()")
++        print(("In ", self.get_name(), "::RemoveCachedAttributes()"))
+         #    Add your own code here
+         remove = [a for a,v in list(self.AttrData.items()) if v[0]<fn.now()-self.ExpireTime]
+         for a in list(self.AttrData.keys())[:]:
+             self.RemoveCachedAttribute(a)
+ 
+     def IsArchived(self, argin):
+-        print("In ", self.get_name(), "::IsArchived()")
++        print(("In ", self.get_name(), "::IsArchived()"))
+         #    Add your own code here
+         return self.reader.is_attribute_archived(argin)
+ 
+     def IsDataReady(self, argin):
+-        print("In ", self.get_name(), "::IsDataReady(%s)"%argin)
++        print(("In ", self.get_name(), "::IsDataReady(%s)"%argin))
+         #    Add your own code here
+         aname = self.tag2attr(argin)
+         argout = aname in self.AttrData
+-        print('\tIsDataReady(%s == %s): %s'%(argin,aname,argout))
++        print(('\tIsDataReady(%s == %s): %s'%(argin,aname,argout)))
+         return argout
+ 
+     def GetCurrentArchivedAtt(self):
+-        print("In ", self.get_name(), "::GetCurrentArchivedAtt()")
++        print(("In ", self.get_name(), "::GetCurrentArchivedAtt()"))
+         #    Add your own code here
+         return self.reader.get_attributes(active=True)
+       
+@@ -508,6 +508,6 @@
+         U.server_run()
+ 
+     except PyTango.DevFailed as e:
+-        print('-------> Received a DevFailed exception:',e)
++        print(('-------> Received a DevFailed exception:',e))
+     except Exception as e:
+-        print('-------> An unforeseen exception occured....',e)
++        print(('-------> An unforeseen exception occured....',e))

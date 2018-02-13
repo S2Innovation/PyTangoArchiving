@@ -46,6 +46,7 @@ import PyTangoArchiving.utils as utils
 from PyTangoArchiving.dbs import ArchivingDB
 from PyTangoArchiving.schemas import Schemas
 import MySQLdb,MySQLdb.cursors
+import collections
 
 __test__ = {}
 
@@ -76,13 +77,13 @@ def get_failed(values):
     i,failed = 0,[]
     while i<len(values)-1:
         if not isNaN(values[i][1]) and isNaN(values[i+1][1]):
-            print 'found error at %s' % time.ctime(values[i+1][0])
+            print(('found error at %s' % time.ctime(values[i+1][0])))
             try:
-                next = (j for j in range(i+1,len(values)) if not isNaN(values[j][1])).next()
+                next = next((j for j in range(i+1,len(values)) if not isNaN(values[j][1])))
                 failed.append((values[i][0],values[i+1][0],values[next][0]))
                 i=next
             except StopIteration: #Unable to find the next valid value
-                print 'no more values found afterwards ...'
+                print('no more values found afterwards ...')
                 failed.append((values[i][0],values[i+1][0],-1))
                 break
         i+=1
@@ -288,9 +289,9 @@ def read_alias_file(alias_file,trace=False):
                 line = csv.getd(i)
                 try: alias[line['Alias']] = line['Attribute']
                 except: pass
-            if trace: print('%d Attribute alias loaded from %s' % (len(alias),alias_file))
-        except Exception,e:
-            print('Unable to parse AliasFile: %s\n%s'%(alias_file,traceback.format_exc()))
+            if trace: print(('%d Attribute alias loaded from %s' % (len(alias),alias_file)))
+        except Exception as e:
+            print(('Unable to parse AliasFile: %s\n%s'%(alias_file,traceback.format_exc())))
             alias.clear()
     return alias
     
@@ -342,8 +343,8 @@ def getArchivingReader(attr_list=None,start_date=0,stop_date=0,
       schemas = ['hdb','tdb']
       
     pref = set(Reader.get_preferred_schema(a) for a in attr_list)    
-    if any(pref): schemas = dict(s for s in schemas.items() if s[0] in pref)
-    if schema: schemas = dict(s for s in schemas.items() if schema in s[0])
+    if any(pref): schemas = dict(s for s in list(schemas.items()) if s[0] in pref)
+    if schema: schemas = dict(s for s in list(schemas.items()) if schema in s[0])
       
     if not attr_list: return None
 
@@ -352,7 +353,7 @@ def getArchivingReader(attr_list=None,start_date=0,stop_date=0,
     else: 
         log = logger and logger.debug or (lambda *args:None)
 
-    log('getArchivingReader(%s): %s'%(attr_list,schemas.keys()))
+    log('getArchivingReader(%s): %s'%(attr_list,list(schemas.keys())))
     a,failed = '',fandango.defaultdict(int)
     
     for name in schemas:
@@ -383,7 +384,7 @@ def getArchivingReader(attr_list=None,start_date=0,stop_date=0,
             log('getArchivingReader(%s,%s): not archived!'%(name,a))
             failed[name]+=1
             
-      except Exception,e:
+      except Exception as e:
         log('getArchivingReader(%s,%s): failed!: %s'%(
             name,a,traceback.format_exc()))
         failed[name]+=1
@@ -393,7 +394,7 @@ def getArchivingReader(attr_list=None,start_date=0,stop_date=0,
         return data['reader']
     
     #Return the best match
-    failed = sorted((c,n) for n,c in failed.items())
+    failed = sorted((c,n) for n,c in list(failed.items()))
     if failed and failed[0][0]!=len(attr_list):
       rd = data[failed[0][1]].get('reader')
       if log: log('getArchivingReader(): Using %s'%failed[0][1])
@@ -466,7 +467,7 @@ class Reader(Object,SingletonMap):
     @classmethod
     def set_preferred_schema(k,attr,sch):
         if sch=='*': sch = None
-        print('Reader.set_preferred_schema(%s,%s)'%(attr,sch))
+        print(('Reader.set_preferred_schema(%s,%s)'%(attr,sch)))
         k.Preferred[attr] = sch
 
     @classmethod
@@ -478,7 +479,7 @@ class Reader(Object,SingletonMap):
     @classmethod
     def parse_instance_key(cls,*p,**k):
         key = ''#','.join(x or '' for x in p) if p else ''
-        k.update(zip(('db','config'),p))
+        k.update(list(zip(('db','config'),p)))
         if 'db' in k: key+=':'+k['db']
         if 'config' in k: key+=':'+k['config']
         if 'schema' in k: key+=':'+(k['schema']).replace('*','') # or (not k.get('db','') and '*'))
@@ -546,7 +547,7 @@ class Reader(Object,SingletonMap):
             self.log.debug("Creating 'universal' reader")
             rd = getArchivingReader()
             #Hdb++ classes will be scanned when searching for HDB
-            tclasses = map(str.lower,fandango.get_database().get_class_list('*'))
+            tclasses = list(map(str.lower,fandango.get_database().get_class_list('*')))
             for s in Schemas.SCHEMAS:
                 if (s in self.DefaultSchemas 
                       and any(c.startswith(s.lower()) for c in tclasses)):
@@ -565,7 +566,7 @@ class Reader(Object,SingletonMap):
                 prop = self.tango.get_class_property('TdbArchiver',['RetentionPeriod'])['RetentionPeriod']
                 prop = prop[0] if prop else 'days/3'
                 Reader.RetentionPeriod = max((Reader.RetentionPeriod,eval('1./(%s)'%prop,{'days':1./(3600*24)})))
-            except Exception,e: 
+            except Exception as e: 
                 self.log.warning('Unable to parse TdbArchiver.RetentionPeriod: %s'%e)
             
         if self.schema!='*':
@@ -584,14 +585,14 @@ class Reader(Object,SingletonMap):
                 try: 
                     alias_file = (self.tango.get_class_property('%sextractor'%self.schema,['AliasFile'])['AliasFile'] or [''])[0]
                     self.alias = read_alias_file(alias_file)
-                except Exception,e: 
+                except Exception as e: 
                     self.low.warning('Unable to read alias file %s: %s'%(alias_file,e))
 
         #Initializing the state machine        
         self.reset() 
         
     def __del__(self):
-        for k in self.dbs.keys()[:]:
+        for k in list(self.dbs.keys())[:]:
             o = self.dbs.pop(k)
             del o
         
@@ -599,7 +600,7 @@ class Reader(Object,SingletonMap):
         self.log.debug('Reader.reset()')
         self.last_dates = defaultdict(lambda:(1e10,0))
         if hasattr(self,'state'):
-            [db.renewMySQLconnection() for db in self.dbs.values()]
+            [db.renewMySQLconnection() for db in list(self.dbs.values())]
         self.last_retry = 0
         self.available_attributes = []
         self.current_attributes = []
@@ -615,8 +616,8 @@ class Reader(Object,SingletonMap):
     def get_database(self,epoch=-1):
         try:
             if epoch<0: epoch = time.time()
-            config = sorted((e,c) for e,c in self.configs.items() if e<=epoch)[-1][-1]
-        except Exception,e:
+            config = sorted((e,c) for e,c in list(self.configs.items()) if e<=epoch)[-1][-1]
+        except Exception as e:
             #traceback.print_exc()
             self.log.warning('Unable to get DB(%s,%s) config at %s, using Java Extractors.\n%s'%(self.db_name,self.schema,epoch,e))
             return None
@@ -653,7 +654,7 @@ class Reader(Object,SingletonMap):
                 if self.is_hdbpp:
                     return True
                 elif self.db_name=='*':
-                    for v in self.configs.values():
+                    for v in list(self.configs.values()):
                       if hasattr(v,'check_state') and v.check_state():
                         self.state = PyTango.DevState.ON
                         return True
@@ -688,7 +689,7 @@ class Reader(Object,SingletonMap):
             try:
                 extractor.ping()
                 extractor.set_timeout_millis(self.timeout)
-            except Exception,e: extractor = None
+            except Exception as e: extractor = None
         if not extractor:
             remaining = self.extractors[:]
             while remaining: #for i in range(len(self.extractors)):
@@ -700,7 +701,7 @@ class Reader(Object,SingletonMap):
                     extractor.ping()
                     extractor.set_timeout_millis(self.timeout)
                     break
-                except Exception,e: 
+                except Exception as e: 
                     self.log.debug(traceback.format_exc())
         self.state = PyTango.DevState.ON if extractor else PyTango.DevState.FAULT
         return extractor    
@@ -711,7 +712,7 @@ class Reader(Object,SingletonMap):
         #Try Unified Reader
         if self.db_name=='*':
             attrs = []
-            for x in self.configs.values():
+            for x in list(self.configs.values()):
                 try:
                     for a in x.get_attributes(active=active):
                         m = parse_tango_model(a)
@@ -774,8 +775,8 @@ class Reader(Object,SingletonMap):
                 attribute = utils.translate_attribute_alias(attribute)
                 if attribute != str(model):
                     attribute,alias = self.get_attribute_alias(attribute),attribute
-        except Exception,e:
-             print('Unable to find alias for %s: %s'%(model,str(e)[:40]))
+        except Exception as e:
+             print(('Unable to find alias for %s: %s'%(model,str(e)[:40])))
         return attribute
                 
     @Cached(depth=10000,expire=60.)
@@ -786,7 +787,7 @@ class Reader(Object,SingletonMap):
         if force or attribute not in self.modes:
             if self.db_name!='*':
                 self.modes[attribute] = dict((utils.translate_attribute_modes(k),v) 
-                    for k,v in self.get_database().get_attribute_modes(attribute,asDict=True).items()
+                    for k,v in list(self.get_database().get_attribute_modes(attribute,asDict=True).items())
                     if k in utils.DB_MODES or k.lower() in ('archiver','id'))
             else:
                 self.modes[attribute] = dict((a,self.configs[a].get_attribute_modes(attribute,force)) for a in ('hdb','tdb') if a in self.configs)
@@ -817,9 +818,9 @@ class Reader(Object,SingletonMap):
                 return [pref]
             else:
                 sch = []
-                for a,c in self.configs.items():
+                for a,c in list(self.configs.items()):
                     try:
-                        if (c and (a not in Schemas.keys() or
+                        if (c and (a not in list(Schemas.keys()) or
                                 Schemas.checkSchema(a,attribute)) 
                             and c.is_attribute_archived(attribute,active)):
                             sch.append(a)
@@ -941,7 +942,7 @@ class Reader(Object,SingletonMap):
         
         cache = self.cache if cache else {}
         if cache:
-            self.log.debug('Checking Keys in Cache: %s'%self.cache.keys())
+            self.log.debug('Checking Keys in Cache: %s'%list(self.cache.keys()))
                 
             margin = max((60.,.01*abs(l2-l1)))
             nearest = [(a,s1,s2,h,d) for a,s1,s2,h,d in self.cache 
@@ -953,7 +954,7 @@ class Reader(Object,SingletonMap):
             ckey = (attr,l1,l2,asHistoryBuffer,bool(decimate))
             values = cache.get(ckey,False)
             
-            if any(len(v)>1e5 for v in self.cache.values()) or get_memory()>2e6:
+            if any(len(v)>1e5 for v in list(self.cache.values())) or get_memory()>2e6:
                 self.log.debug('... Reader.cache clear()')
                 self.cache.clear()
             
@@ -977,17 +978,17 @@ class Reader(Object,SingletonMap):
 
             resolution = max((1,(stop_time-start_time)/MAX_RESOLUTION))
             vals = dict((k,fandango.arrays.filter_array(v,window=resolution)) 
-                            for k,v in self.get_attributes_values(
-                                attributes,start_date,stop_date).items())
+                            for k,v in list(self.get_attributes_values(
+                                attributes,start_date,stop_date).items()))
             cvals = self.correlate_values(vals,resolution=resolution,
                                 rule=choose_last_value)#(lambda t1,t2,tt:t2))
 
             values,error = [],False
-            for i,t in enumerate(cvals.values()[0]):
+            for i,t in enumerate(list(cvals.values())[0]):
                 v = None
                 try:
-                    pars = dict((getId(k),v[i][1]) for k,v in cvals.items())
-                    if None not in pars.values(): v = eval(attribute,pars)
+                    pars = dict((getId(k),v[i][1]) for k,v in list(cvals.items()))
+                    if None not in list(pars.values()): v = eval(attribute,pars)
                 except:
                     if not error: traceback.print_exc()
                     error = True
@@ -1112,7 +1113,7 @@ class Reader(Object,SingletonMap):
             try:
                 full_name,ID,data_type,data_format,writable = \
                     db.get_attribute_descriptions(attribute)[0]
-            except Exception,e: 
+            except Exception as e: 
                 raise Exception('%s_AttributeNotArchived: %s'
                                 %(attribute,e))
 
@@ -1165,7 +1166,7 @@ class Reader(Object,SingletonMap):
             values = self.extract_mysql_data(result,
                             data_type,data_format,notNone)
             values = patch_booleans(values)
-        except Exception,e:
+        except Exception as e:
             self.log.info(traceback.format_exc())
             raise Exception('Reader.UnableToConvertData(%s,format=%s)'
                             % (attribute,data_format),str(e))
@@ -1238,7 +1239,7 @@ class Reader(Object,SingletonMap):
                 if not decimate or next is None or not new_values or data_has_changed(fcmp(vv),fcmp(last),fcmp(next)):
                     new_values.append(fout(vv))
                     last = vv
-            except Exception,e:
+            except Exception as e:
                 self.log.warning('reader.get_attribute_values(...,asHistoryBuffer=%s): Unable to parse %d[%s]:(%s); %s'%(asHistoryBuffer,i,array_index,v,traceback.format_exc()))
         if decimate:
             self.log.info('\tIn extract_array_index(...).raw: decimated repeated values in spectrum ... %s -> %s'%(l0,len(new_values)))
@@ -1272,10 +1273,10 @@ class Reader(Object,SingletonMap):
             if trace or text: 
                 csv = self.export_to_text(table,order=list(attributes))
                 if text: return csv
-                elif trace: print csv
+                elif trace: print(csv)
             return table
         else:
-            if trace: print values
+            if trace: print(values)
             return values
           
     @staticmethod
@@ -1298,16 +1299,16 @@ class Reader(Object,SingletonMap):
         start = time.time()
         if not hasattr(table,'keys'): table = {'attribute':table}
         if not order or not all(k in order for k in table): keys = list(sorted(table.keys()))
-        else: keys = sorted(table.keys(),key=order.index)
+        else: keys = sorted(list(table.keys()),key=order.index)
         csv = sep.join(['date','time']+keys)+linesep
         def value_to_text(s):
           v = (str(s) if not fandango.isSequence(s) else arrsep.join(map(str,s))).replace('None','')
           return v
         time_to_text = lambda t: time2str(t,cad='%Y-%m-%d_%H:%M:%S')+('%0.3f'%(t%1)).lstrip('0') #taurustrend timestamp format
-        for i in range(len(table.values()[0])):
-            csv+=sep.join([time_to_text(table.values()[0][i][0]),str(table.values()[0][i][0])]+[value_to_text(table[k][i][1]) for k in keys])
+        for i in range(len(list(table.values())[0])):
+            csv+=sep.join([time_to_text(list(table.values())[0][i][0]),str(list(table.values())[0][i][0])]+[value_to_text(table[k][i][1]) for k in keys])
             csv+=linesep
-        print('Text file generated in %d milliseconds'%(1000*(time.time()-start)))
+        print(('Text file generated in %d milliseconds'%(1000*(time.time()-start))))
         return csv
 
     def correlate_values(self,values,stop=None,resolution=None,debug=False,rule=None,MAX_VALUES=50000):
@@ -1319,16 +1320,16 @@ class Reader(Object,SingletonMap):
         '''
         start = time.time()
         self.log.info('correlate_values(%d x %d,resolution=%s,MAX_VALUES=%d) started at %s'%(
-            len(values),max(len(v) for v in values.values()),resolution,MAX_VALUES,time.ctime(start)))
+            len(values),max(len(v) for v in list(values.values())),resolution,MAX_VALUES,time.ctime(start)))
         stop = stop or start
         keys = sorted(values.keys())
         table = dict((k,list()) for k in keys)
         index = dict((k,0) for k in keys)
         lasts = dict((k,(0,None)) for k in keys)
-        first,last = min([t[0][0] if t else 1e12 for t in values.values()]),max([t[-1][0] if t else 0 for t in values.values()])
+        first,last = min([t[0][0] if t else 1e12 for t in list(values.values())]),max([t[-1][0] if t else 0 for t in list(values.values())])
         if resolution is None:
             #Avg: aproximated time resolution of each row
-            avg = (last-first)/min((MAX_VALUES/6,max(len(v) for v in values.values()) or 1))
+            avg = (last-first)/min((MAX_VALUES/6,max(len(v) for v in list(values.values())) or 1))
             if avg < 10: resolution = 1
             elif 10 <= avg<60: resolution = 10
             elif 60 <= avg<600: resolution = 60
@@ -1339,8 +1340,8 @@ class Reader(Object,SingletonMap):
         if rule is None: rule = fun.partial(choose_first_value,tmin=-resolution*10)
         #if rule is None: rule = fun.partial(choose_last_max_value,tmin=-resolution*10)
         
-        epochs = range(int(first-resolution),int(last+resolution),int(resolution))
-        for k,data in values.items():
+        epochs = list(range(int(first-resolution),int(last+resolution),int(resolution)))
+        for k,data in list(values.items()):
             self.log.info('Correlating %s->%s values from %s'%(len(data),len(epochs),k))
             i,v,end = 0,data[0] if data else (first,None),data[-1][0] if data else (last,None)
 
@@ -1388,7 +1389,7 @@ class Reader(Object,SingletonMap):
             vattr,vsize=str(result[1][0]),int(result[0][0])
             time.sleep(0.2)
             if vattr not in [a.name for a in extractor.attribute_list_query()]:
-                raise Exception,'%s_NotIn%sAttributeList'%(vattr,extractor.name())
+                raise Exception('%s_NotIn%sAttributeList'%(vattr,extractor.name()))
             self.log.debug( '\treading last value of attribute %s'%vattr)
             last_value = extractor.read_attribute(vattr).value
             self.log.debug('\treading %s attribute history values of %s (last_value = %s)'% (vsize,vattr,last_value))
@@ -1405,13 +1406,13 @@ class Reader(Object,SingletonMap):
                 history = nhist
             #Sorting extracted values
             try: history=[v for t,u,v in sorted((h.time.tv_sec,h.time.tv_usec,h) for h in history)]
-            except Exception,e: self.log.error('Unable to sort history values: %s'%e)
+            except Exception as e: self.log.error('Unable to sort history values: %s'%e)
             
             self.clean_extractor(extractor,vattr)
             self.attr_extracted[attribute]=(lambda s: s if ':' in s else self.tango_host+'/'+s)(extractor.name())
-        except Exception,e: 
+        except Exception as e: 
             self.log.warning( traceback.format_exc())
-            raise Exception,'Archiving.Reader_ExtractorFailed(%s)!:%s' % (extractor.name(),str(e))
+            raise Exception('Archiving.Reader_ExtractorFailed(%s)!:%s' % (extractor.name(),str(e)))
         if int(PyTango.__version__.split('.')[0])>=7:
             values = asHistoryBuffer and history or [(ctime2time(h.time),h.value) for h in history]
             self.last_reads = history and (ctime2time(history[0].time),ctime2time(history[-1].time)) or (1e10,1e10)
@@ -1440,13 +1441,13 @@ class Reader(Object,SingletonMap):
             #self.db = None
             
     def __extractorCommand(self,extractor=None,command='',args=[]):
-        if not command: raise Exception,'Reader__extractorCommand:CommandArgumentRequired!'
+        if not command: raise Exception('Reader__extractorCommand:CommandArgumentRequired!')
         if not extractor: extractor = self.get_extractor()
         extractor.ping()        
         try:
             self.log.debug( 'in damn Reader.__extractorCommand: calling HdbExtractor(%s).%s(%s)'%(extractor.name(),command,args))
             result = extractor.command_inout(*([command]+(args and [args] or [])))
-        except PyTango.DevFailed, e:
+        except PyTango.DevFailed as e:
             #e.args[0]['reason'],e.args[0]['desc'],e.args[0]['origin']
             reason = '__len__' in dir(e.args[0]) and e.args[0]['reason'] or e.args[0]
             if 'Broken pipe' in str(reason):
@@ -1459,7 +1460,7 @@ class Reader(Object,SingletonMap):
                 result = extractor.command_inout(*([command]+(args and [args] or [])))
             else:
                 self.log.warning(traceback.format_exc())
-                raise Exception,'Reader__extractorCommand:Failed(%s)!'% str(e)
+                raise Exception('Reader__extractorCommand:Failed(%s)!'% str(e))
         #self.log.debug( 'in Reader.__extractorCommand: command finished')
         return result
             
@@ -1532,7 +1533,7 @@ class ReaderByBunches(Reader):
                                 self.warning('\tError in %s callback %s!'%(key,callback))
                                 self.warning(traceback.format_exc())
                         self.callbacks.pop(key)
-            except Exception,e:
+            except Exception as e:
                 self.warning('\tError in thread!\n%s'%(traceback.format_exc()))
             self._threading_event.wait(0.1)
         self.log.info('Exiting PyTangoArchiving.ReaderProcess()._receive_data thread')
@@ -1574,7 +1575,7 @@ class ReaderByBunches(Reader):
         This method will just put the query in the queue
         """
         decimate,window = decimate if isSequence(decimate) else (decimate,'0')
-        if callable(decimate): decimate = decimate.__module__+'.'+decimate.__name__
+        if isinstance(decimate, collections.Callable): decimate = decimate.__module__+'.'+decimate.__name__
         query = {'attribute':attribute,'start_date':start_date,'stop_date':stop_date,'asHistoryBuffer':asHistoryBuffer,'decimate':(decimate,window),'N':N}
         assert hasattr(callback,'__call__'),'2nd argument must be callable'
         self.asked_attributes.append(attribute.lower())
@@ -1739,7 +1740,7 @@ class ReaderProcess(Logger,SingletonMap): #,Object,SingletonMap):
                                 self.warning('\tError in %s callback %s!'%(key,callback))
                                 self.warning(traceback.format_exc())
                         self.callbacks.pop(key)
-            except Exception,e:
+            except Exception as e:
                 self.warning('\tError in thread!\n%s'%(traceback.format_exc()))
             self._threading_event.wait(0.1)
         self.info('Exiting PyTangoArchiving.ReaderProcess()._receive_data thread')
@@ -1787,7 +1788,7 @@ class ReaderProcess(Logger,SingletonMap): #,Object,SingletonMap):
         """
         assert self.alive()
         decimate,window = decimate if isSequence(decimate) else (decimate,'0')
-        if callable(decimate): decimate = decimate.__module__+'.'+decimate.__name__
+        if isinstance(decimate, collections.Callable): decimate = decimate.__module__+'.'+decimate.__name__
         query = {'attribute':attribute,'start_date':start_date,'stop_date':stop_date,'asHistoryBuffer':asHistoryBuffer,'decimate':(decimate,window),'N':N}
         assert hasattr(callback,'__call__'),'2nd argument must be callable'
         self.asked_attributes.append(attribute.lower())

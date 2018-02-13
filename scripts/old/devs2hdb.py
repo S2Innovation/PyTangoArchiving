@@ -14,7 +14,7 @@ period = None
 if len(sys.argv) >= 3:
 	nservs = int(sys.argv[1])
 	ndevs = int(sys.argv[2])
-	print 'nservs=',nservs,';ndevs=',ndevs
+	print(('nservs=',nservs,';ndevs=',ndevs))
 	
 if len(sys.argv) >= 4:
 	period = int(sys.argv[3])
@@ -30,31 +30,31 @@ def dev2archiver(config,attributes,mode):
 		isArch = dp.command_inout('IsArchivedHdb',attributes)
 		for i,v in enumerate(isArch):
 			if v:
-				print 'Attributes ',attributes,' are actually being archived ... Stopping ...'
+				print(('Attributes ',attributes,' are actually being archived ... Stopping ...'))
 				dp.command_inout('ArchivingStopHdb',attributes[i:i+1])
 		time.sleep(1.)
 		r = dp.command_inout('ArchivingStartHdb',args) #It Worked!
 		#print 'c'
 		if r is not None:
-			print r
+			print(r)
 		#print 'd'
 		pass
-	except PyTango.DevFailed,e:
+	except PyTango.DevFailed as e:
 		PyTango.Except.print_exception(e)
-	except Exception,e:
+	except Exception as e:
             	exstring = traceback.format_exc()
-            	print 'Exception occurred and catched: ', exstring
-		print "Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name	
-		print 'Last exception was: \n'+str(e)+'\n'
+            	print(('Exception occurred and catched: ', exstring))
+		print(("Exception '",str(e),"' in ",inspect.currentframe().f_code.co_name))	
+		print(('Last exception was: \n'+str(e)+'\n'))
 
 if nservs is None:
-	nservs = int(raw_input('How many servers do you want to register %02d?'))
+	nservs = int(eval(input('How many servers do you want to register %02d?')))
 if sstart is None:
-	sstart = int(raw_input('Starting with?'))
+	sstart = int(eval(input('Starting with?')))
 if ndevs is None:
-	ndevs = int(raw_input('How many devices do you want to register from each server?'))
+	ndevs = int(eval(input('How many devices do you want to register from each server?')))
 if period is None:
-	period = int(raw_input('Archiving Period?'))	
+	period = int(eval(input('Archiving Period?')))	
 
 for m in range(sstart,sstart+nservs):
 	attributes=[]
@@ -66,7 +66,7 @@ for m in range(sstart,sstart+nservs):
 		device='sim/pysignalsimulator/'+member
 		#attributes.append(device+'/A1')
 		attributes=[device+'/A1']
-		print 'Starting HdbArchive with mode ',mode,' for attributes: ',attributes
+		print(('Starting HdbArchive with mode ',mode,' for attributes: ',attributes))
 		dev2archiver(config,attributes,mode)
 		time.sleep(20.)
 
