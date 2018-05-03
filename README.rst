@@ -1,4 +1,9 @@
-   
+PyTangoArchiving
+================
+
+Main features
+-------------
+
 PyTangoArchiving allows to:
 
 * Integrate Hdb and Snap archiving with other python/PyTango tools.
@@ -17,8 +22,17 @@ Examples and usage of PyTangoArchiving can be found here:
 
 The old tags and branches are available in sourceforge: 
 
-   https://svn.code.sf.net/p/tango-cs/code/archiving/tool/PyTangoArchiving
+* https://svn.code.sf.net/p/tango-cs/code/archiving/tool/PyTangoArchiving
 
--------------------------------------------------------------------------------
+
+Requirements
+------------
+
+- [fandango](https://github.com/tango-controls/fandango)
+- [PyTango](https://github.com/tango-controls/pytango)
+
+```console
+pip install -r requirements.txt
+```
 
 

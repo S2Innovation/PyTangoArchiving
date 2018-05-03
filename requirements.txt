@@ -1,0 +1,4 @@
+numpy >= 1.1
+fandango
+PyTango
+MySQL-python
